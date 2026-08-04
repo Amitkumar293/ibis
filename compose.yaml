@@ -407,10 +407,10 @@ services:
     ports:
       - 50000:50000
     healthcheck:
-      interval: 15s
+      interval: 30s
       retries: 40
-      start_period: 180s
-      timeout: 10s
+      start_period: 600s
+      timeout: 30s
       test:
         - CMD-SHELL
         - su - db2inst1 -c "db2 connect to ibis_testing user db2inst1 using ibis_testing && db2 'SELECT 1 FROM SYSIBM.SYSDUMMY1'"
