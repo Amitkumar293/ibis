@@ -13,10 +13,10 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 DB2_USER = os.environ.get("IBIS_TEST_DB2_USER", "db2inst1")
-DB2_PASS = os.environ.get("IBIS_TEST_DB2_PASSWORD", "ibis_testing")
+DB2_PASS = os.environ.get("IBIS_TEST_DB2_PASSWORD", "ibistest")
 DB2_HOST = os.environ.get("IBIS_TEST_DB2_HOST", "localhost")
 DB2_PORT = int(os.environ.get("IBIS_TEST_DB2_PORT", "50000"))
-DB2_DATABASE = os.environ.get("IBIS_TEST_DB2_DATABASE", "ibis_testing")
+DB2_DATABASE = os.environ.get("IBIS_TEST_DB2_DATABASE", "ibistest")
 
 
 class TestConf(ServiceBackendTest):

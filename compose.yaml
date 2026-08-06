@@ -400,8 +400,8 @@ services:
     environment:
       LICENSE: accept
       DB2INSTANCE: db2inst1
-      DB2INST1_PASSWORD: ibis_testing
-      DBNAME: ibis_testing
+      DB2INST1_PASSWORD: ibistest
+      DBNAME: ibistest
       ARCHIVE_LOGS: "false"
       AUTOCONFIG: "false"
     ports:
@@ -413,7 +413,7 @@ services:
       timeout: 30s
       test:
         - CMD-SHELL
-        - su - db2inst1 -c "db2 connect to ibis_testing user db2inst1 using ibis_testing && db2 'SELECT 1 FROM SYSIBM.SYSDUMMY1'"
+        - su - db2inst1 -c "db2 connect to ibistest user db2inst1 using ibistest && db2 'SELECT 1 FROM SYSIBM.SYSDUMMY1'"
     networks:
       - db2
     volumes:
