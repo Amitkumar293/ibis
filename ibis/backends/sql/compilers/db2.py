@@ -14,6 +14,7 @@ except ImportError:
     _Db2BaseDialect = None
     _DB2_SQLGLOT_AVAILABLE = False
 
+import ibis.common.exceptions as com
 import ibis.expr.operations as ops
 from ibis.backends.sql.compilers.base import SQLGlotCompiler
 from ibis.backends.sql.datatypes import Db2Type
@@ -299,14 +300,11 @@ class Db2Compiler(SQLGlotCompiler):
 
     def visit_StringSplit(self, op, *, arg, delimiter):
         """Visit a StringSplit operation."""
-        # Db2 doesn't have native string split, return as-is
-        # This would need to be handled at a higher level
-        return arg
+        raise com.OperationNotDefinedError("Db2 does not support string split")
 
-    def visit_ArrayCollect(self, op, *, arg):
+    def visit_ArrayCollect(self, op, *, arg, where, order_by, include_null):
         """Visit an ArrayCollect operation."""
-        # Db2 uses LISTAGG for array aggregation
-        return sge.Anonymous(this="LISTAGG", expressions=[arg, sge.convert(",")])
+        raise com.OperationNotDefinedError("Db2 does not support array collect")
 
     def visit_Arbitrary(self, op, *, arg, where):
         """Visit an Arbitrary operation using ANY_VALUE (Db2 11.1+)."""
@@ -322,19 +320,15 @@ class Db2Compiler(SQLGlotCompiler):
 
     def visit_Mode(self, op, *, arg, where):
         """Visit a Mode operation."""
-        # Db2 doesn't have native MODE, use workaround with COUNT and GROUP BY
-        # This is a simplified version
-        return sge.Anonymous(this="MODE", expressions=[arg])
+        raise com.OperationNotDefinedError("Db2 does not support mode aggregation")
 
     def visit_ArgMin(self, op, *, arg, key, where):
         """Visit an ArgMin operation."""
-        # Db2 uses MIN_BY or equivalent window function
-        return sge.Anonymous(this="MIN_BY", expressions=[arg, key])
+        raise com.OperationNotDefinedError("Db2 does not support arg_min")
 
     def visit_ArgMax(self, op, *, arg, key, where):
         """Visit an ArgMax operation."""
-        # Db2 uses MAX_BY or equivalent window function
-        return sge.Anonymous(this="MAX_BY", expressions=[arg, key])
+        raise com.OperationNotDefinedError("Db2 does not support arg_max")
 
     def visit_CountDistinct(self, op, *, arg, where):
         """Visit a CountDistinct operation."""
@@ -348,15 +342,13 @@ class Db2Compiler(SQLGlotCompiler):
         # Db2 doesn't have APPROX_COUNT_DISTINCT, use COUNT(DISTINCT)
         return self.visit_CountDistinct(op, arg=arg, where=where)
 
-    def visit_First(self, op, *, arg, where):
+    def visit_First(self, op, *, arg, where, include_null):
         """Visit a First operation."""
-        # Db2 uses FIRST_VALUE window function
-        return sge.Anonymous(this="FIRST_VALUE", expressions=[arg])
+        raise com.OperationNotDefinedError("Db2 does not support first aggregation")
 
-    def visit_Last(self, op, *, arg, where):
+    def visit_Last(self, op, *, arg, where, include_null):
         """Visit a Last operation."""
-        # Db2 uses LAST_VALUE window function
-        return sge.Anonymous(this="LAST_VALUE", expressions=[arg])
+        raise com.OperationNotDefinedError("Db2 does not support last aggregation")
 
     def visit_Lag(self, op, *, arg, offset, default):
         """Visit a Lag operation."""
@@ -377,36 +369,6 @@ class Db2Compiler(SQLGlotCompiler):
         if default is not None:
             expressions.append(default)
         return sge.Anonymous(this="LEAD", expressions=expressions)
-
-    def visit_RowNumber(self, op):
-        """Visit a RowNumber operation."""
-        # Db2 ROW_NUMBER function
-        return sge.Anonymous(this="ROW_NUMBER", expressions=[])
-
-    def visit_Rank(self, op):
-        """Visit a Rank operation."""
-        # Db2 RANK function
-        return sge.Anonymous(this="RANK", expressions=[])
-
-    def visit_DenseRank(self, op):
-        """Visit a DenseRank operation."""
-        # Db2 DENSE_RANK function
-        return sge.Anonymous(this="DENSE_RANK", expressions=[])
-
-    def visit_PercentRank(self, op):
-        """Visit a PercentRank operation."""
-        # Db2 PERCENT_RANK function
-        return sge.Anonymous(this="PERCENT_RANK", expressions=[])
-
-    def visit_CumeDist(self, op):
-        """Visit a CumeDist operation."""
-        # Db2 CUME_DIST function
-        return sge.Anonymous(this="CUME_DIST", expressions=[])
-
-    def visit_NTile(self, op, *, buckets):
-        """Visit an NTile operation."""
-        # Db2 NTILE function
-        return sge.Anonymous(this="NTILE", expressions=[buckets])
 
     def visit_DateTruncate(self, op, *, arg, unit):
         """Visit a DateTruncate operation."""
@@ -477,13 +439,11 @@ class Db2Compiler(SQLGlotCompiler):
 
     def visit_Hash(self, op, *, arg):
         """Visit a Hash operation."""
-        # Db2 uses HASH function
-        return sge.Anonymous(this="HASH", expressions=[arg])
+        raise com.OperationNotDefinedError("Db2 does not support hash")
 
     def visit_HashBytes(self, op, *, arg, how):
         """Visit a HashBytes operation."""
-        # Db2 uses HASH function with algorithm
-        return sge.Anonymous(this="HASH", expressions=[arg, sge.convert(how)])
+        raise com.OperationNotDefinedError("Db2 does not support hash_bytes")
 
 
 compiler = Db2Compiler()
