@@ -128,3 +128,14 @@ class TestConf(ServiceBackendTest):
 def con(tmp_path_factory, data_dir, worker_id):
     with TestConf.load_data(data_dir, tmp_path_factory, worker_id) as be:
         yield be.connection
+
+
+@pytest.fixture(scope="session")
+def string_temp_table(backend, con):  # noqa: ARG001
+    """Override the common string_temp_table fixture for Db2.
+
+    ibm_db_dbi crashes when fetching accented characters or emoji from a
+    result set, so we xfail the entire fixture rather than letting the
+    driver abort the test process.
+    """
+    pytest.xfail("ibm_db_dbi crashes fetching accented/emoji string results")
