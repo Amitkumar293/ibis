@@ -1,3 +1,4 @@
+# CI trigger: force workflow run after codespell fix
 from __future__ import annotations
 
 import os
