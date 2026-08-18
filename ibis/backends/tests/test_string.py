@@ -1398,6 +1398,8 @@ def string_temp_table(backend, con):
 def test_string_methods_accents_and_emoji(
     string_temp_table, backend, result_mut, expected_func
 ):
+    if backend.name() == "db2":
+        pytest.skip("ibm_db driver segfaults when fetching emoji and accented characters")
     """
     ┏━━━━━━━━━━━━┓
     ┃ string_col ┃
