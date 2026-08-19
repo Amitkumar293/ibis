@@ -222,6 +222,9 @@ class Backend(
     def _post_connect(self):
         # -155 is the code for datetimeoffset
         self.con.add_output_converter(-155, datetimeoffset_to_datetime)
+        
+        # Enable autocommit to avoid transaction issues in Python 3.14+
+        self.con.autocommit = True
 
         with closing(self.con.cursor()) as cur:
             cur.execute("SET DATEFIRST 1")
