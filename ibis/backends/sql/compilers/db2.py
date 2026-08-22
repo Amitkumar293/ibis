@@ -72,13 +72,13 @@ class Db2Generator(Generator):
         """Db2 doesn't support TABLESAMPLE, return empty string."""
         return ""
 
-    def cast_sql(self, expression: exp.Cast) -> str:
+    def cast_sql(self, expression: exp.Cast, safe_prefix: str | None = None) -> str:
         """Generate CAST expression for Db2."""
         return f"CAST({self.sql(expression, 'this')} AS {self.sql(expression, 'to')})"
 
-    def trycast_sql(self, expression: exp.TryCast) -> str:
+    def trycast_sql(self, expression: exp.TryCast, safe_prefix: str | None = None) -> str:
         """Db2 doesn't have TRY_CAST, use regular CAST."""
-        return self.cast_sql(expression)
+        return self.cast_sql(expression, safe_prefix)
 
     def boolean_sql(self, expression: exp.Boolean) -> str:
         """Generate boolean literal for Db2."""
@@ -212,13 +212,14 @@ class Db2Compiler(SQLGlotCompiler):
         *SQLGlotCompiler.rewrites,
     )
 
-    # Exclude StartsWith and StringContains from SIMPLE_OPS to use our custom implementations
+    # Exclude StartsWith, StringContains, and RandomUUID from SIMPLE_OPS to use our custom implementations
     # StartsWith: base class maps to "starts_with" function which doesn't exist in Db2
     # StringContains: base class maps to "contains" function which requires text search feature
+    # RandomUUID: base class maps to "uuid" function which doesn't exist in Db2
     SIMPLE_OPS = {
         k: v
         for k, v in SQLGlotCompiler.SIMPLE_OPS.items()
-        if k not in (ops.StartsWith, ops.StringContains)
+        if k not in (ops.StartsWith, ops.StringContains, ops.RandomUUID)
     }
 
     @staticmethod
