@@ -445,6 +445,37 @@ class Db2Compiler(SQLGlotCompiler):
     def visit_HashBytes(self, op, *, arg, how):
         """Visit a HashBytes operation."""
         raise com.OperationNotDefinedError("Db2 does not support hash_bytes")
+        
+    def visit_LogicalOr(self, op, *, arg, where):
+        """DB2 doesn't have LOGICAL_OR, use MAX(CASE WHEN ... THEN 1 ELSE 0 END) = 1"""
+        condition = self.if_(arg, 1, 0)
+        return self.agg.max(condition, where=where).eq(sge.convert(1))
+
+    def visit_LogicalAnd(self, op, *, arg, where):
+        """DB2 doesn't have LOGICAL_AND, use MIN(CASE WHEN ... THEN 1 ELSE 0 END) = 1"""
+        condition = self.if_(arg, 1, 0)
+        return self.agg.min(condition, where=where).eq(sge.convert(1))
+
+    def visit_IsNan(self, op, *, arg):
+        """DB2: NaN is the only value not equal to itself"""
+        return arg.neq(arg)
+
+    def visit_IsInf(self, op, *, arg):
+        """DB2: Check if absolute value exceeds maximum float"""
+        return sge.Abs(this=arg).gt(sge.Literal.number("1E308"))
+
+    def visit_BitAnd(self, op, *, arg, where):
+        """Visit a BitAnd aggregation operation."""
+        raise com.OperationNotDefinedError("Db2 does not support BIT_AND aggregation")
+
+    def visit_BitOr(self, op, *, arg, where):
+        """Visit a BitOr aggregation operation."""
+        raise com.OperationNotDefinedError("Db2 does not support BIT_OR aggregation")
+
+    def visit_BitXor(self, op, *, arg, where):
+        """Visit a BitXor aggregation operation."""
+        raise com.OperationNotDefinedError("Db2 does not support BIT_XOR aggregation")
+
 
 
 compiler = Db2Compiler()
