@@ -212,14 +212,27 @@ class Db2Compiler(SQLGlotCompiler):
         *SQLGlotCompiler.rewrites,
     )
 
-    # Exclude StartsWith, StringContains, and RandomUUID from SIMPLE_OPS to use our custom implementations
-    # StartsWith: base class maps to "starts_with" function which doesn't exist in Db2
-    # StringContains: base class maps to "contains" function which requires text search feature
-    # RandomUUID: base class maps to "uuid" function which doesn't exist in Db2
+    # Exclude operations from SIMPLE_OPS that need custom implementations
     SIMPLE_OPS = {
         k: v
         for k, v in SQLGlotCompiler.SIMPLE_OPS.items()
-        if k not in (ops.StartsWith, ops.StringContains, ops.RandomUUID)
+        if k not in (
+            ops.StartsWith,          # → visit_StartsWith (LEFT + LENGTH)
+            ops.StringContains,      # → visit_StringContains (LOCATE)
+            ops.RandomUUID,          # → visit_RandomUUID (GENERATE_UNIQUE)
+            ops.Any,                 # → visit_Any (MAX CASE workaround)
+            ops.All,                 # → visit_All (MIN CASE workaround)
+            ops.IsNan,               # → visit_IsNan (arg <> arg)
+            ops.IsInf,               # → visit_IsInf (ABS > 1E308)
+            ops.ArgMin,              # → visit_ArgMin (raise)
+            ops.ArgMax,              # → visit_ArgMax (raise)
+            ops.ApproxCountDistinct, # → visit_ApproxCountDistinct (COUNT DISTINCT)
+            ops.StringSplit,         # → visit_StringSplit (raise)
+            ops.Median,              # → visit_Median (already implemented)
+            ops.RegexSearch,         # → visit_RegexSearch (REGEXP_LIKE)
+            ops.RegexExtract,        # → visit_RegexExtract (REGEXP_SUBSTR)
+            ops.RandomScalar,        # → visit_RandomScalar (RAND())
+        )
     }
 
     @staticmethod
@@ -446,13 +459,13 @@ class Db2Compiler(SQLGlotCompiler):
         """Visit a HashBytes operation."""
         raise com.OperationNotDefinedError("Db2 does not support hash_bytes")
         
-    def visit_LogicalOr(self, op, *, arg, where):
-        """DB2 doesn't have LOGICAL_OR, use MAX(CASE WHEN ... THEN 1 ELSE 0 END) = 1"""
+    def visit_Any(self, op, *, arg, where):
+        """Db2 has no LOGICAL_OR. Use MAX(CASE WHEN arg THEN 1 ELSE 0 END) = 1"""
         condition = self.if_(arg, 1, 0)
         return self.agg.max(condition, where=where).eq(sge.convert(1))
 
-    def visit_LogicalAnd(self, op, *, arg, where):
-        """DB2 doesn't have LOGICAL_AND, use MIN(CASE WHEN ... THEN 1 ELSE 0 END) = 1"""
+    def visit_All(self, op, *, arg, where):
+        """Db2 has no LOGICAL_AND. Use MIN(CASE WHEN arg THEN 1 ELSE 0 END) = 1"""
         condition = self.if_(arg, 1, 0)
         return self.agg.min(condition, where=where).eq(sge.convert(1))
 
