@@ -115,6 +115,7 @@ aggregate_test_params = [
                     "exasol",
                     "athena",
                     "materialize",
+                    "db2",
                 ],
                 raises=com.OperationNotDefinedError,
             ),
@@ -733,6 +734,7 @@ def test_first_last_ordered_in_mutate(alltypes, con, method, expected):
         "mysql",
         "singlestoredb",
         "oracle",
+        "db2",
     ],
     raises=com.OperationNotDefinedError,
 )
@@ -1204,7 +1206,7 @@ def test_approx_median(alltypes):
     ["bigquery", "druid", "sqlite"], raises=com.OperationNotDefinedError
 )
 @pytest.mark.notyet(
-    ["impala", "mysql", "singlestoredb", "mssql", "druid", "trino", "athena"],
+    ["impala", "mysql", "singlestoredb", "mssql", "druid", "trino", "athena", "db2"],
     raises=com.OperationNotDefinedError,
 )
 @pytest.mark.never(
@@ -1224,7 +1226,7 @@ def test_median(alltypes, df):
     ["bigquery", "druid", "sqlite"], raises=com.OperationNotDefinedError
 )
 @pytest.mark.notyet(
-    ["impala", "mysql", "singlestoredb", "mssql", "trino", "flink", "athena"],
+    ["impala", "mysql", "singlestoredb", "mssql", "trino", "flink", "athena", "db2"],
     raises=com.OperationNotDefinedError,
 )
 @pytest.mark.notyet(
