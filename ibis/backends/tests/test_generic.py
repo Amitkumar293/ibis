@@ -1624,6 +1624,11 @@ def test_select_distinct_filter_order_by_commute(backend, alltypes, df, ops):
     raises=com.UnsupportedOperationError,
     reason="first/last requires an order_by",
 )
+@pytest.mark.notimpl(
+    ["db2"],
+    raises=com.OperationNotDefinedError,
+    reason="Db2 does not support first/last aggregation",
+)
 def test_distinct_on_keep(backend, on, keep):
     from ibis import _
 
@@ -1691,6 +1696,11 @@ def test_distinct_on_keep(backend, on, keep):
     ["materialize"],
     raises=com.UnsupportedOperationError,
     reason="keep=None not supported in materialize (doesn't use First aggregate)",
+)
+@pytest.mark.notimpl(
+    ["db2"],
+    raises=com.OperationNotDefinedError,
+    reason="Db2 does not support first aggregation",
 )
 def test_distinct_on_keep_is_none(backend, on):
     from ibis import _
@@ -1773,7 +1783,7 @@ def test_hash(backend, alltypes, dtype):
     assert h1.notnull().all()
 
 
-@pytest.mark.notimpl(["trino", "oracle", "exasol", "snowflake", "athena"])
+@pytest.mark.notimpl(["trino", "oracle", "exasol", "snowflake", "athena", "db2"])
 @pytest.mark.notimpl(
     ["materialize"],
     reason="Hashbytes function not yet implemented in Materialize backend.",
