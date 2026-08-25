@@ -225,8 +225,11 @@ class Backend(SQLBackend):
         self._cursor = self._connection.cursor()
 
     @contextlib.contextmanager
-    def _safe_raw_sql(self, query: str, **kwargs: Any):
+    def _safe_raw_sql(self, query: str | sg.Expression, **kwargs: Any):
         """Execute raw SQL safely with cursor management."""
+        if isinstance(query, sg.exp.Expression):
+            query = query.sql(dialect=self.compiler.dialect)
+        
         cursor = self._connection.cursor()
         try:
             cursor.execute(query, **kwargs)
@@ -682,78 +685,8 @@ class Backend(SQLBackend):
         """
         import pyarrow as pa
 
-        df = self.to_pandas(expr, params=params, limit=limit, **kwargs)
+        df = super().to_pandas(expr, params=params, limit=limit, **kwargs)
         return pa.Table.from_pandas(df)
-
-    def to_pandas(
-        self,
-        expr: ir.Expr,
-        /,
-        *,
-        params: Mapping[ir.Scalar, Any] | None = None,
-        limit: int | str | None = None,
-        **kwargs: Any,
-    ) -> pd.DataFrame:
-        """Execute expression and return results as pandas DataFrame.
-
-        Parameters
-        ----------
-        expr : ir.Expr
-            Ibis expression
-        params : Mapping[ir.Scalar, Any], optional
-            Query parameters
-        limit : int | str, optional
-            Result limit
-        **kwargs
-            Additional arguments
-
-        Returns
-        -------
-        pd.DataFrame
-            Query results
-        """
-        sql = self.compile(expr, params=params, limit=limit)
-
-        with self._safe_raw_sql(sql) as cursor:
-            schema = expr.as_table().schema()
-
-            # Verify column count matches (safety check for alignment)
-            if cursor.description and len(cursor.description) != len(schema.names):
-                raise exc.IbisError(
-                    f"Column count mismatch: query returned {len(cursor.description)} columns "
-                    f"but schema has {len(schema.names)} columns"
-                )
-
-            return self._fetch_from_cursor(cursor, schema)
-
-    def execute(
-        self,
-        expr: ir.Expr,
-        /,
-        *,
-        params: Mapping[ir.Scalar, Any] | None = None,
-        limit: int | str | None = None,
-        **kwargs: Any,
-    ) -> Any:
-        """Execute an Ibis expression.
-
-        Parameters
-        ----------
-        expr : ir.Expr
-            Expression to execute
-        params : Mapping[ir.Scalar, Any], optional
-            Query parameters
-        limit : int | str, optional
-            Result limit
-        **kwargs
-            Additional arguments
-
-        Returns
-        -------
-        Any
-            Execution result
-        """
-        return self.to_pandas(expr, params=params, limit=limit, **kwargs)
 
     def _get_schema_using_query(self, query: str) -> sch.Schema:
         """Get schema from a SQL query.
