@@ -220,10 +220,6 @@ class Db2Compiler(SQLGlotCompiler):
             ops.StartsWith,          # → visit_StartsWith (LEFT + LENGTH)
             ops.StringContains,      # → visit_StringContains (LOCATE)
             ops.RandomUUID,          # → visit_RandomUUID (GENERATE_UNIQUE)
-            ops.Any,                 # → visit_Any (MAX CASE workaround)
-            ops.All,                 # → visit_All (MIN CASE workaround)
-            ops.IsNan,               # → visit_IsNan (arg <> arg)
-            ops.IsInf,               # → visit_IsInf (ABS > 1E308)
             ops.ArgMin,              # → visit_ArgMin (raise)
             ops.ArgMax,              # → visit_ArgMax (raise)
             ops.ApproxCountDistinct, # → visit_ApproxCountDistinct (COUNT DISTINCT)
@@ -316,7 +312,7 @@ class Db2Compiler(SQLGlotCompiler):
         """Visit a StringSplit operation."""
         raise com.OperationNotDefinedError("Db2 does not support string split")
 
-    def visit_ArrayCollect(self, op, *, arg, where, order_by, include_null):
+    def visit_ArrayCollect(self, op, *, arg, where, order_by, include_null, distinct):
         """Visit an ArrayCollect operation."""
         raise com.OperationNotDefinedError("Db2 does not support array collect")
 
@@ -356,11 +352,11 @@ class Db2Compiler(SQLGlotCompiler):
         # Db2 doesn't have APPROX_COUNT_DISTINCT, use COUNT(DISTINCT)
         return self.visit_CountDistinct(op, arg=arg, where=where)
 
-    def visit_First(self, op, *, arg, where, include_null):
+    def visit_First(self, op, *, arg, where, include_null, order_by):
         """Visit a First operation."""
         raise com.OperationNotDefinedError("Db2 does not support first aggregation")
 
-    def visit_Last(self, op, *, arg, where, include_null):
+    def visit_Last(self, op, *, arg, where, include_null, order_by):
         """Visit a Last operation."""
         raise com.OperationNotDefinedError("Db2 does not support last aggregation")
 
@@ -459,36 +455,4 @@ class Db2Compiler(SQLGlotCompiler):
         """Visit a HashBytes operation."""
         raise com.OperationNotDefinedError("Db2 does not support hash_bytes")
         
-    def visit_Any(self, op, *, arg, where):
-        """Db2 has no LOGICAL_OR. Use MAX(CASE WHEN arg THEN 1 ELSE 0 END) = 1"""
-        condition = self.if_(arg, 1, 0)
-        return self.agg.max(condition, where=where).eq(sge.convert(1))
-
-    def visit_All(self, op, *, arg, where):
-        """Db2 has no LOGICAL_AND. Use MIN(CASE WHEN arg THEN 1 ELSE 0 END) = 1"""
-        condition = self.if_(arg, 1, 0)
-        return self.agg.min(condition, where=where).eq(sge.convert(1))
-
-    def visit_IsNan(self, op, *, arg):
-        """DB2: NaN is the only value not equal to itself"""
-        return arg.neq(arg)
-
-    def visit_IsInf(self, op, *, arg):
-        """DB2: Check if absolute value exceeds maximum float"""
-        return sge.Abs(this=arg).gt(sge.Literal.number("1E308"))
-
-    def visit_BitAnd(self, op, *, arg, where):
-        """Visit a BitAnd aggregation operation."""
-        raise com.OperationNotDefinedError("Db2 does not support BIT_AND aggregation")
-
-    def visit_BitOr(self, op, *, arg, where):
-        """Visit a BitOr aggregation operation."""
-        raise com.OperationNotDefinedError("Db2 does not support BIT_OR aggregation")
-
-    def visit_BitXor(self, op, *, arg, where):
-        """Visit a BitXor aggregation operation."""
-        raise com.OperationNotDefinedError("Db2 does not support BIT_XOR aggregation")
-
-
-
 compiler = Db2Compiler()
