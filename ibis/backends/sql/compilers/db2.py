@@ -360,7 +360,7 @@ class Db2Compiler(SQLGlotCompiler):
         """Visit a Last operation."""
         raise com.OperationNotDefinedError("Db2 does not support last aggregation")
 
-    def visit_Lag(self, op, *, arg, offset, default):
+    def visit_Lag(self, op, *, arg, offset, default, **_):
         """Visit a Lag operation."""
         # Db2 LAG function
         expressions = [arg]
@@ -370,7 +370,7 @@ class Db2Compiler(SQLGlotCompiler):
             expressions.append(default)
         return sge.Anonymous(this="LAG", expressions=expressions)
 
-    def visit_Lead(self, op, *, arg, offset, default):
+    def visit_Lead(self, op, *, arg, offset, default, **_):
         """Visit a Lead operation."""
         # Db2 LEAD function
         expressions = [arg]
