@@ -491,8 +491,13 @@ class Backend(SQLBackend):
             col_defs.append(f"{quoted_col_name} {db2_type} {nullable}")
 
         columns_sql = ", ".join(col_defs)
-        create_sql = f"CREATE {temp_clause}TABLE {full_name} ({columns_sql})"
-
+        # DB2 requires an explicit tablespace with sufficient page size.
+        # IBIS_32K (32KB pages) is pre-created in conftest._load_data and
+        # supports all column types including VARCHAR(32768) used by
+        # memtable/cache operations.
+        tablespace_clause = " IN IBIS_32K" if not temp else ""
+        create_sql = f"CREATE {temp_clause}TABLE {full_name} ({columns_sql}){tablespace_clause}"
+        
         with self._safe_raw_sql(create_sql):
             pass
         # Commit the CREATE TABLE statement so it is visible to new connections.
