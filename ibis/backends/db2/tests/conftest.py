@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import os
 from typing import TYPE_CHECKING, Any
 
@@ -55,6 +56,9 @@ class TestConf(ServiceBackendTest):
 
         Steps
         -----
+        0. Create tablespaces with required page sizes (4KB, 8KB, 16KB, 32KB)
+           to support various data types and operations. Suppress errors if
+           tablespaces already exist.
         1. Execute every DDL statement from ``ci/schema/db2.sql`` one at a
            time, committing after each — ibm_db_dbi does not support
            multi-statement batches.
@@ -64,6 +68,22 @@ class TestConf(ServiceBackendTest):
            5 000 rows, committing each batch.
         """
         import pandas as pd
+
+        # Step 0: Create tablespaces with different page sizes
+        # DB2 requires tablespaces with specific page sizes for certain operations.
+        # Suppress exceptions if tablespaces already exist (similar to Oracle backend).
+        tablespace_stmts = [
+            "CREATE TABLESPACE IBIS_4K PAGESIZE 4K MANAGED BY AUTOMATIC STORAGE",
+            "CREATE TABLESPACE IBIS_8K PAGESIZE 8K MANAGED BY AUTOMATIC STORAGE",
+            "CREATE TABLESPACE IBIS_16K PAGESIZE 16K MANAGED BY AUTOMATIC STORAGE",
+            "CREATE TABLESPACE IBIS_32K PAGESIZE 32K MANAGED BY AUTOMATIC STORAGE",
+        ]
+        
+        for stmt in tablespace_stmts:
+            with contextlib.suppress(Exception):
+                with self.connection._safe_raw_sql(stmt):
+                    pass
+                self.connection._connection.commit()
 
         # Step 1: DDL — uses self.ddl_script (BackendTest.ddl_script reads
         # ci/schema/db2.sql and splits on ";", same as every other backend).
