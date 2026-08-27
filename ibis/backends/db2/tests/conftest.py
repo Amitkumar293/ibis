@@ -81,15 +81,20 @@ class TestConf(ServiceBackendTest):
         # not silently proceed with missing tablespaces and produce 267+
         # confusing SQL0286N failures deep inside the test run.
         tablespace_stmts = [
+            # Bufferpools MUST come first — DB2's default bufferpool (IBMDEFAULTBP)
+            # only supports 4K pages. Without these, creating 8K/16K/32K tablespaces
+            # fails with SQL1582N.
+            "CREATE BUFFERPOOL IBIS_BP8K SIZE 250 PAGESIZE 8K",
+            "CREATE BUFFERPOOL IBIS_BP16K SIZE 250 PAGESIZE 16K",
+            "CREATE BUFFERPOOL IBIS_BP32K SIZE 250 PAGESIZE 32K",
+            # Regular tablespaces
             "CREATE TABLESPACE IBIS_4K PAGESIZE 4K MANAGED BY AUTOMATIC STORAGE",
-            "CREATE TABLESPACE IBIS_8K PAGESIZE 8K MANAGED BY AUTOMATIC STORAGE",
-            "CREATE TABLESPACE IBIS_16K PAGESIZE 16K MANAGED BY AUTOMATIC STORAGE",
-            "CREATE TABLESPACE IBIS_32K PAGESIZE 32K MANAGED BY AUTOMATIC STORAGE",
-            # USER TEMPORARY tablespaces are required for GLOBAL TEMPORARY tables.
-            # DB2 will raise SQL0286N if no USER TEMPORARY tablespace with the
-            # right page size exists when a GLOBAL TEMPORARY table is created.
+            "CREATE TABLESPACE IBIS_8K PAGESIZE 8K MANAGED BY AUTOMATIC STORAGE BUFFERPOOL IBIS_BP8K",
+            "CREATE TABLESPACE IBIS_16K PAGESIZE 16K MANAGED BY AUTOMATIC STORAGE BUFFERPOOL IBIS_BP16K",
+            "CREATE TABLESPACE IBIS_32K PAGESIZE 32K MANAGED BY AUTOMATIC STORAGE BUFFERPOOL IBIS_BP32K",
+            # USER TEMPORARY tablespaces for GLOBAL TEMPORARY tables
             "CREATE USER TEMPORARY TABLESPACE IBIS_TEMP_4K PAGESIZE 4K MANAGED BY AUTOMATIC STORAGE",
-            "CREATE USER TEMPORARY TABLESPACE IBIS_TEMP_32K PAGESIZE 32K MANAGED BY AUTOMATIC STORAGE",
+            "CREATE USER TEMPORARY TABLESPACE IBIS_TEMP_32K PAGESIZE 32K MANAGED BY AUTOMATIC STORAGE BUFFERPOOL IBIS_BP32K",
         ]
 
         for stmt in tablespace_stmts:
