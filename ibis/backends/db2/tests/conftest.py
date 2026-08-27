@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import contextlib
 import os
 from typing import TYPE_CHECKING, Any
 
@@ -57,8 +56,10 @@ class TestConf(ServiceBackendTest):
         Steps
         -----
         0. Create tablespaces with required page sizes (4KB, 8KB, 16KB, 32KB)
-           to support various data types and operations. Suppress errors if
-           tablespaces already exist.
+           and USER TEMPORARY tablespaces for GLOBAL TEMPORARY tables.
+           Raises a clear RuntimeError if creation fails for any reason other
+           than the tablespace already existing (SQL0601N / -601).
+           Verifies all required tablespaces exist before proceeding.
         1. Execute every DDL statement from ``ci/schema/db2.sql`` one at a
            time, committing after each — ibm_db_dbi does not support
            multi-statement batches.
@@ -69,21 +70,78 @@ class TestConf(ServiceBackendTest):
         """
         import pandas as pd
 
-        # Step 0: Create tablespaces with different page sizes
-        # DB2 requires tablespaces with specific page sizes for certain operations.
-        # Suppress exceptions if tablespaces already exist (similar to Oracle backend).
+        # Step 0: Create tablespaces with different page sizes.
+        # DB2 requires tablespaces with specific page sizes for certain
+        # operations (e.g. tables with VARCHAR(32768) columns need 32K pages).
+        # USER TEMPORARY tablespaces are required for GLOBAL TEMPORARY tables.
+        #
+        # We do NOT suppress all exceptions here — only SQL0601N (object
+        # already exists) is safe to ignore on re-runs. Any other error
+        # (permissions, storage, syntax) must surface immediately so CI does
+        # not silently proceed with missing tablespaces and produce 267+
+        # confusing SQL0286N failures deep inside the test run.
         tablespace_stmts = [
             "CREATE TABLESPACE IBIS_4K PAGESIZE 4K MANAGED BY AUTOMATIC STORAGE",
             "CREATE TABLESPACE IBIS_8K PAGESIZE 8K MANAGED BY AUTOMATIC STORAGE",
             "CREATE TABLESPACE IBIS_16K PAGESIZE 16K MANAGED BY AUTOMATIC STORAGE",
             "CREATE TABLESPACE IBIS_32K PAGESIZE 32K MANAGED BY AUTOMATIC STORAGE",
+            # USER TEMPORARY tablespaces are required for GLOBAL TEMPORARY tables.
+            # DB2 will raise SQL0286N if no USER TEMPORARY tablespace with the
+            # right page size exists when a GLOBAL TEMPORARY table is created.
+            "CREATE USER TEMPORARY TABLESPACE IBIS_TEMP_4K PAGESIZE 4K MANAGED BY AUTOMATIC STORAGE",
+            "CREATE USER TEMPORARY TABLESPACE IBIS_TEMP_32K PAGESIZE 32K MANAGED BY AUTOMATIC STORAGE",
         ]
-        
+
         for stmt in tablespace_stmts:
-            with contextlib.suppress(Exception):
+            try:
                 with self.connection._safe_raw_sql(stmt):
                     pass
                 self.connection._connection.commit()
+            except Exception as e:
+                # SQL0601N / SQLCODE -601 = object already exists.
+                # ibm_db_dbi wraps errors as:
+                #   "ibm_db_dbi::ProgrammingError: Statement Execute Failed:
+                #    ... SQL0601N ..."
+                # so we check all three variants to be safe.
+                err_str = str(e)
+                already_exists = (
+                    "SQL0601N" in err_str
+                    or "-601" in err_str
+                    or "already exists" in err_str.lower()
+                )
+                if not already_exists:
+                    raise RuntimeError(
+                        f"Failed to create tablespace.\n"
+                        f"Statement : {stmt}\n"
+                        f"Error     : {e}\n\n"
+                        f"Check that the DB2inst1 user has SYSCTRL or SYSADM "
+                        f"authority and that automatic storage is configured "
+                        f"for the '{DB2_DATABASE}' database."
+                    ) from e
+
+        # Verify all required regular tablespaces were actually created.
+        # This catches the case where creation appeared to succeed but the
+        # tablespace is still missing (e.g. a driver-level swallowed error).
+        verify_sql = """
+            SELECT TBSPACE
+            FROM SYSCAT.TABLESPACES
+            WHERE TBSPACE IN ('IBIS_4K', 'IBIS_8K', 'IBIS_16K', 'IBIS_32K',
+                              'IBIS_TEMP_4K', 'IBIS_TEMP_32K')
+        """
+        with self.connection._safe_raw_sql(verify_sql) as cur:
+            created = {row[0] for row in cur.fetchall()}
+
+        required = {"IBIS_4K", "IBIS_8K", "IBIS_16K", "IBIS_32K",
+                    "IBIS_TEMP_4K", "IBIS_TEMP_32K"}
+        missing = required - created
+        if missing:
+            raise RuntimeError(
+                f"Required DB2 tablespaces are missing after creation attempt: "
+                f"{sorted(missing)}.\n"
+                f"This will cause SQL0286N failures in every test that uses "
+                f"memtable() or create_table(). Check DB2 container logs and "
+                f"ensure automatic storage is enabled for '{DB2_DATABASE}'."
+            )
 
         # Step 1: DDL — uses self.ddl_script (BackendTest.ddl_script reads
         # ci/schema/db2.sql and splits on ";", same as every other backend).
