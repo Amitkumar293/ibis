@@ -144,6 +144,12 @@ class Backend(SQLBackend):
         except Exception as e:
             raise exc.OperationNotDefinedError(f"Failed to connect to Db2: {e}") from e
 
+    @property
+    def con(self):
+        """Alias for _connection — required by base SQL backend's
+        _make_memtable_finalizer which references self.con."""
+        return self._connection
+
     def _from_url(self, url: ParseResult, **kwarg_overrides):
         """Create a Db2 backend from a URL.
 
@@ -455,8 +461,13 @@ class Backend(SQLBackend):
         if schema is None:
             if isinstance(obj, pd.DataFrame):
                 schema = sch.infer(obj)
-            else:
+            elif isinstance(obj, ir.Table):
                 schema = obj.schema()
+            else:
+                # Handle pyarrow.Table, list of dicts, etc.
+                # Convert to DataFrame first then infer schema
+                obj = pd.DataFrame(obj)
+                schema = sch.infer(obj)
 
         # Build CREATE TABLE statement
         temp_clause = "GLOBAL TEMPORARY " if temp else ""
@@ -507,17 +518,20 @@ class Backend(SQLBackend):
         # always visible on the same connection immediately after a DDL commit.
         # A fresh connection guarantees the table is readable before we try
         # to inspect its schema via self.table().
-        self._reconnect()
+        if not temp:
+            self._reconnect()
 
         # Insert data if provided
         if obj is not None:
             if isinstance(obj, pd.DataFrame):
                 self.insert(name, obj, database=database)
-            else:
-                # Insert from table expression
+            elif isinstance(obj, ir.Table):
                 insert_sql = f"INSERT INTO {full_name} {self.compile(obj)}"
                 with self._safe_raw_sql(insert_sql):
                     pass
+            else:
+                # pyarrow.Table, list of dicts already converted to DataFrame above
+                self.insert(name, obj, database=database)
 
         return self.table(name, database=database)
 
