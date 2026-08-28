@@ -514,12 +514,8 @@ class Backend(SQLBackend):
         # Commit the CREATE TABLE statement so it is visible to new connections.
         self._connection.commit()
 
-        # Reconnect: ibm_db_dbi's catalog views (SYSCAT.COLUMNS) are not
-        # always visible on the same connection immediately after a DDL commit.
-        # A fresh connection guarantees the table is readable before we try
-        # to inspect its schema via self.table().
-        if not temp:
-            self._reconnect()
+        
+        self._reconnect()
 
         # Insert data if provided
         if obj is not None:
