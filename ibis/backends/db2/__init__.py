@@ -746,7 +746,11 @@ class Backend(SQLBackend):
 
         if isinstance(data, pd.DataFrame):
             schema = sch.infer(data)
-            self.create_table(name, data, schema=schema, temp=True)
+            # Use temp=False — DB2 GLOBAL TEMPORARY tables are session-scoped
+            # and get destroyed by _reconnect() called inside create_table.
+            # We use a permanent table instead and rely on the finalizer to drop it.
+            if name not in self.list_tables():
+                self.create_table(name, data, schema=schema, temp=False, overwrite=False)
 
 
 def connect(
