@@ -178,7 +178,7 @@ class TestConf(ServiceBackendTest):
 
             # Column names are double-quoted in the DDL so they are stored
             # verbatim.  Mirror that quoting in the INSERT statement.
-            col_names = ", ".join(f'"{c.lower()}"' for c in df.columns)
+            col_names = ", ".join(f'"{c}"' for c in df.columns)
             placeholders = ", ".join("?" for _ in df.columns)
             insert_sql = f"INSERT INTO {table} ({col_names}) VALUES ({placeholders})"
 

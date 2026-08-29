@@ -405,7 +405,7 @@ class Backend(SQLBackend):
 
             ibis_type = type_mapper.from_string(type_str, nullable=(nulls == "Y"))
             # Return column names in lowercase for ibis convention
-            fields[col_name.lower()] = ibis_type
+            fields[col_name] = ibis_type
 
         return sch.Schema(fields)
 
