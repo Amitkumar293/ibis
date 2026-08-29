@@ -49,37 +49,37 @@ CREATE TABLE astronauts (
 DROP TABLE IF EXISTS batting;
 
 CREATE TABLE batting (
-    "playerID" VARCHAR(255),
-    "yearID" BIGINT,
+    "playerid" VARCHAR(255),
+    "yearid" BIGINT,
     "stint" BIGINT,
-    "teamID" VARCHAR(7),
-    "lgID" VARCHAR(7),
-    "G" BIGINT,
-    "AB" BIGINT,
-    "R" BIGINT,
-    "H" BIGINT,
-    "X2B" BIGINT,
-    "X3B" BIGINT,
-    "HR" BIGINT,
-    "RBI" BIGINT,
-    "SB" BIGINT,
-    "CS" BIGINT,
-    "BB" BIGINT,
-    "SO" BIGINT,
-    "IBB" BIGINT,
-    "HBP" BIGINT,
-    "SH" BIGINT,
-    "SF" BIGINT,
-    "GIDP" BIGINT
+    "teamid" VARCHAR(7),
+    "lgid" VARCHAR(7),
+    "g" BIGINT,
+    "ab" BIGINT,
+    "r" BIGINT,
+    "h" BIGINT,
+    "x2b" BIGINT,
+    "x3b" BIGINT,
+    "hr" BIGINT,
+    "rbi" BIGINT,
+    "sb" BIGINT,
+    "cs" BIGINT,
+    "bb" BIGINT,
+    "so" BIGINT,
+    "ibb" BIGINT,
+    "hbp" BIGINT,
+    "sh" BIGINT,
+    "sf" BIGINT,
+    "gidp" BIGINT
 );
 
 DROP TABLE IF EXISTS awards_players;
 
 CREATE TABLE awards_players (
-    "playerID" VARCHAR(255),
-    "awardID" VARCHAR(255),
-    "yearID" BIGINT,
-    "lgID" VARCHAR(7),
+    "playerid" VARCHAR(255),
+    "awardid" VARCHAR(255),
+    "yearid" BIGINT,
+    "lgid" VARCHAR(7),
     "tie" VARCHAR(7),
     "notes" VARCHAR(255)
 );
