@@ -454,5 +454,9 @@ class Db2Compiler(SQLGlotCompiler):
     def visit_HashBytes(self, op, *, arg, how):
         """Visit a HashBytes operation."""
         raise com.OperationNotDefinedError("Db2 does not support hash_bytes")
-        
+
+    def visit_InMemoryTable(self, op, *, name, schema, data):
+        # DB2 stores all identifiers uppercase — memtable names must match
+        return super().visit_InMemoryTable(op, name=name.upper(), schema=schema, data=data)
+            
 compiler = Db2Compiler()
