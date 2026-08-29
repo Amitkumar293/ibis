@@ -425,6 +425,7 @@ class Backend(SQLBackend):
         database: str | None = None,
         temp: bool = False,
         overwrite: bool = False,
+        _preserve_case: bool = False,
     ) -> ir.Table:
         """Create a new table.
 
@@ -456,7 +457,8 @@ class Backend(SQLBackend):
         # Db2 stores unquoted identifiers in UPPERCASE in SYSCAT.  Normalise
         # the name to uppercase now so the quoted DDL ("NAME") also stores an
         # uppercase name and self.table() / get_schema() can always find it.
-        name = name.upper()
+        if not _preserve_case:
+            name = name.upper()
 
         if schema is None:
             if isinstance(obj, pd.DataFrame):
@@ -520,7 +522,7 @@ class Backend(SQLBackend):
         # Insert data if provided
         if obj is not None:
             if isinstance(obj, pd.DataFrame):
-                self.insert(name, obj, database=database)
+                self.insert(name, obj, database=database, _preserve_case=_preserve_case)
             elif isinstance(obj, ir.Table):
                 insert_sql = f"INSERT INTO {full_name} {self.compile(obj)}"
                 with self._safe_raw_sql(insert_sql):
@@ -597,6 +599,7 @@ class Backend(SQLBackend):
         *,
         database: str | None = None,
         overwrite: bool = False,
+        _preserve_case: bool = False,
     ) -> None:
         """Insert data into a table.
 
@@ -613,7 +616,8 @@ class Backend(SQLBackend):
         """
         import pandas as pd
 
-        name = name.upper()
+        if not _preserve_case:
+            name = name.upper()
         full_name = sg.table(name, db=database, quoted=self.compiler.quoted).sql(
             self.dialect
         )
@@ -746,12 +750,16 @@ class Backend(SQLBackend):
 
         if isinstance(data, pd.DataFrame):
             schema = sch.infer(data)
-            # Use temp=False — DB2 GLOBAL TEMPORARY tables are session-scoped
-            # and get destroyed by _reconnect() called inside create_table.
-            # We use a permanent table instead and rely on the finalizer to drop it.
+            
             if name not in self.list_tables():
-                self.create_table(name, data, schema=schema, temp=False, overwrite=False)
-
+                # _preserve_case=True: the compiler references memtables using
+                # the exact literal op.name (quoted), so the physical table
+                # must keep that same case — normal tables get uppercased,
+                # memtables must not.
+                self.create_table(
+                    name, data, schema=schema, temp=False, overwrite=False,
+                    _preserve_case=True,
+                )
 
 def connect(
     database: str,
