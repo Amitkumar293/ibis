@@ -3,7 +3,7 @@ WITH "t1" AS (
     *
   FROM "leaf" AS "t0"
   WHERE
-    TRUE
+    1
 )
 SELECT
   "t3"."key"
