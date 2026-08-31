@@ -425,10 +425,14 @@ class Db2Compiler(SQLGlotCompiler):
     def visit_DayOfWeekIndex(self, op, *, arg):
         """Visit a DayOfWeekIndex operation."""
         # Db2 uses DAYOFWEEK function (1=Sunday, 7=Saturday)
-        # Adjust to 0-based index (0=Monday)
-        return sge.Sub(
-            this=sge.Anonymous(this="DAYOFWEEK", expressions=[arg]),
-            expression=sge.convert(1),
+        # ibis expects 0=Monday, 1=Tuesday, ..., 6=Sunday
+        # Formula: (DAYOFWEEK(x) + 5) % 7
+        return sge.Mod(
+            this=sge.Add(
+                this=sge.Anonymous(this="DAYOFWEEK", expressions=[arg]),
+                expression=sge.convert(5),
+            ),
+            expression=sge.convert(7),
         )
 
     def visit_DayOfWeekName(self, op, *, arg):
