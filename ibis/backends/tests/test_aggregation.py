@@ -17,6 +17,7 @@ from ibis.backends.tests.errors import (
     DatabricksServerOperationError,
     ExaQueryError,
     GoogleBadRequest,
+    IbmDb2Error,
     ImpalaHiveServer2Error,
     MySQLNotSupportedError,
     OracleDatabaseError,
@@ -231,10 +232,11 @@ def test_aggregate_grouped(backend, alltypes, df, result_fn, expected_fn):
             id="any",
             marks=[
                 pytest.mark.notimpl(
-                    ["druid", "db2"],
+                    ["druid"],
                     raises=AttributeError,
                     reason="'IntegerColumn' object has no attribute 'any'",
                 ),
+                pytest.mark.notimpl(["db2"], raises=IbmDb2Error),
             ],
         ),
         param(
@@ -243,10 +245,11 @@ def test_aggregate_grouped(backend, alltypes, df, result_fn, expected_fn):
             id="notany",
             marks=[
                 pytest.mark.notimpl(
-                    ["druid", "db2"],
+                    ["druid"],
                     raises=AttributeError,
                     reason="'IntegerColumn' object has no attribute 'notany'",
                 ),
+                pytest.mark.notimpl(["db2"], raises=IbmDb2Error),
             ],
         ),
         param(
@@ -255,10 +258,11 @@ def test_aggregate_grouped(backend, alltypes, df, result_fn, expected_fn):
             id="any_negate",
             marks=[
                 pytest.mark.notimpl(
-                    ["druid", "db2"],
+                    ["druid"],
                     raises=AttributeError,
                     reason="'IntegerColumn' object has no attribute 'any'",
                 ),
+                pytest.mark.notimpl(["db2"], raises=IbmDb2Error),
             ],
         ),
         param(
@@ -267,10 +271,11 @@ def test_aggregate_grouped(backend, alltypes, df, result_fn, expected_fn):
             id="all",
             marks=[
                 pytest.mark.notimpl(
-                    ["druid", "db2"],
+                    ["druid"],
                     raises=AttributeError,
                     reason="'IntegerColumn' object has no attribute 'all'",
                 ),
+                pytest.mark.notimpl(["db2"], raises=IbmDb2Error),
             ],
         ),
         param(
@@ -279,10 +284,11 @@ def test_aggregate_grouped(backend, alltypes, df, result_fn, expected_fn):
             id="notall",
             marks=[
                 pytest.mark.notimpl(
-                    ["druid", "db2"],
+                    ["druid"],
                     raises=AttributeError,
                     reason="'IntegerColumn' object has no attribute 'notall'",
                 ),
+                pytest.mark.notimpl(["db2"], raises=IbmDb2Error),
             ],
         ),
         param(
@@ -291,10 +297,11 @@ def test_aggregate_grouped(backend, alltypes, df, result_fn, expected_fn):
             id="all_negate",
             marks=[
                 pytest.mark.notimpl(
-                    ["druid", "db2"],
+                    ["druid"],
                     raises=AttributeError,
                     reason="'IntegerColumn' object has no attribute 'all'",
                 ),
+                pytest.mark.notimpl(["db2"], raises=IbmDb2Error),
             ],
         ),
         param(
@@ -442,7 +449,10 @@ def test_aggregate_grouped(backend, alltypes, df, result_fn, expected_fn):
             lambda t, where: t.double_col.var(how="sample", where=where),
             lambda t, where: t.double_col[where].var(ddof=1),
             id="var",
-            marks=[pytest.mark.notimpl(["druid"], raises=com.OperationNotDefinedError)],
+            marks=[
+                pytest.mark.notimpl(["druid"], raises=com.OperationNotDefinedError),
+                pytest.mark.notimpl(["db2"], raises=AssertionError),
+            ],
         ),
         param(
             lambda t, where: t.double_col.std(how="pop", where=where),
@@ -454,7 +464,10 @@ def test_aggregate_grouped(backend, alltypes, df, result_fn, expected_fn):
             lambda t, where: t.double_col.var(how="pop", where=where),
             lambda t, where: t.double_col[where].var(ddof=0),
             id="var_pop",
-            marks=[pytest.mark.notimpl(["druid"], raises=com.OperationNotDefinedError)],
+            marks=[
+                pytest.mark.notimpl(["druid"], raises=com.OperationNotDefinedError),
+                pytest.mark.notimpl(["db2"], raises=IbmDb2Error),
+            ],
         ),
         param(
             lambda t, where: t.string_col.approx_nunique(where=where),
@@ -771,7 +784,6 @@ def test_argmin_argmax(alltypes, method, filtered, null_result):
         "exasol",
         "flink",
         "risingwave",
-        "db2",
     ],
     raises=com.OperationNotDefinedError,
 )
@@ -819,13 +831,18 @@ def test_arbitrary(alltypes, filtered):
     ],
 )
 @pytest.mark.notyet(
-    ["druid", "mssql", "oracle", "sqlite", "flink", "db2"],
+    ["druid", "mssql", "oracle", "sqlite", "flink"],
     raises=(
         OracleDatabaseError,
         com.UnsupportedOperationError,
         com.OperationNotDefinedError,
     ),
     reason="backend doesn't support count distinct with multiple columns",
+)
+@pytest.mark.notyet(
+    ["db2"],
+    raises=com.OperationNotDefinedError,
+    reason="Db2 does not support COUNT(DISTINCT *)",
 )
 @pytest.mark.notyet(
     ["datafusion"],
@@ -1042,7 +1059,7 @@ def test_approx_quantile(con, filtered, multi):
             lambda t, where: t.G[where].corr(t.RBI[where]),
             id="corr_pop",
             marks=[
-                pytest.mark.notimpl(["druid"], raises=com.OperationNotDefinedError),
+                pytest.mark.notimpl(["druid", "db2"], raises=com.OperationNotDefinedError),
                 pytest.mark.notyet(
                     ["impala", "mysql", "singlestoredb", "sqlite", "flink"],
                     raises=com.OperationNotDefinedError,
@@ -1065,7 +1082,7 @@ def test_approx_quantile(con, filtered, multi):
             id="corr_samp",
             marks=[
                 pytest.mark.notimpl(
-                    ["druid"],
+                    ["druid", "db2"],
                     raises=com.OperationNotDefinedError,
                 ),
                 pytest.mark.notyet(
@@ -1125,7 +1142,7 @@ def test_approx_quantile(con, filtered, multi):
             lambda t, where: (t.G[where] > 34.0).corr(t.G[where] <= 34.0),
             id="corr_pop_bool",
             marks=[
-                pytest.mark.notimpl(["druid"], raises=com.OperationNotDefinedError),
+                pytest.mark.notimpl(["druid", "db2"], raises=com.OperationNotDefinedError),
                 pytest.mark.notyet(
                     ["impala", "mysql", "singlestoredb", "sqlite", "flink"],
                     raises=com.OperationNotDefinedError,
@@ -1155,7 +1172,7 @@ def test_approx_quantile(con, filtered, multi):
         ),
     ],
 )
-@pytest.mark.notimpl(["mssql", "db2"], raises=com.OperationNotDefinedError)
+@pytest.mark.notimpl(["mssql"], raises=com.OperationNotDefinedError)
 @pytest.mark.notyet(
     ["materialize"],
     raises=com.OperationNotDefinedError,
@@ -1189,7 +1206,7 @@ def test_corr_cov(
 
 
 @pytest.mark.notimpl(
-    ["mysql", "singlestoredb", "sqlite", "mssql", "druid", "db2"],
+    ["mysql", "singlestoredb", "sqlite", "mssql", "druid"],
     raises=com.OperationNotDefinedError,
 )
 @pytest.mark.notyet(["flink"], raises=com.OperationNotDefinedError)
@@ -1209,7 +1226,7 @@ def test_approx_median(alltypes):
     ["bigquery", "druid", "sqlite"], raises=com.OperationNotDefinedError
 )
 @pytest.mark.notyet(
-    ["impala", "mysql", "singlestoredb", "mssql", "druid", "trino", "athena", "db2"],
+    ["impala", "mysql", "singlestoredb", "mssql", "druid", "trino", "athena"],
     raises=com.OperationNotDefinedError,
 )
 @pytest.mark.never(
@@ -1362,16 +1379,17 @@ def test_date_quantile(alltypes):
             lambda t: t.string_col.isin(["1", "7"]),
             lambda t: t.string_col.isin(["1", "7"]),
             id="is_in",
+            marks=[pytest.mark.notimpl(["db2"], raises=IbmDb2Error)],
         ),
         param(
             lambda t: t.string_col.notin(["1", "7"]),
             lambda t: ~t.string_col.isin(["1", "7"]),
             id="not_in",
+            marks=[pytest.mark.notimpl(["db2"], raises=IbmDb2Error)],
         ),
     ],
 )
 @pytest.mark.notyet(["flink"], raises=Py4JJavaError)
-@pytest.mark.notimpl(["db2"], raises=com.OperationNotDefinedError)
 def test_group_concat(
     backend, alltypes, df, ibis_cond, pandas_cond, ibis_sep, pandas_sep
 ):
@@ -1554,7 +1572,7 @@ def test_topk_op(alltypes, df):
 @pytest.mark.notyet(
     ["flink"], raises=Py4JError, reason="Flink doesn't support semi joins"
 )
-@pytest.mark.notimpl(["db2"], raises=com.OperationNotDefinedError)
+@pytest.mark.notimpl(["db2"], raises=IbmDb2Error)
 def test_topk_filter_op(con, alltypes, df, result_fn, expected_fn):
     # TopK expression will order rows by "count" but each backend
     # can have different result for that.
