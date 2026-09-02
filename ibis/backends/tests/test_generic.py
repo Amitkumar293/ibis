@@ -163,7 +163,7 @@ def test_scalar_fill_null_nullif(con, expr, expected):
             methodcaller("isnan"),
             marks=[
                 pytest.mark.notimpl(
-                    ["mysql", "singlestoredb", "mssql", "sqlite", "druid"]
+                    ["mysql", "singlestoredb", "mssql", "sqlite", "druid", "db2"]
                 ),
                 pytest.mark.notyet(
                     ["exasol"],
@@ -357,6 +357,13 @@ def test_notin(backend, alltypes, sorted_df, column, elements):
             lambda t: t.bool_col ^ t.bool_col,
             lambda df: df.bool_col ^ df.bool_col,
             id="xor",
+            marks=[
+                pytest.mark.notimpl(
+                    ["db2"],
+                    raises=com.OperationNotDefinedError,
+                    reason="DB2 does not support XOR operator",
+                )
+            ],
         ),
     ],
 )
@@ -389,6 +396,11 @@ def test_filter(backend, alltypes, sorted_df, predicate_fn, expected_fn):
 @pytest.mark.notyet(
     ["flink"],
     reason="Flink engine does not support generic window clause with no order by",
+)
+@pytest.mark.notimpl(
+    ["db2"],
+    raises=AssertionError,
+    reason="DB2 filter with window op returns different results",
 )
 # TODO(kszucs): this is not supported at the expression level
 def test_filter_with_window_op(backend, alltypes, sorted_df):
@@ -430,7 +442,7 @@ def test_case_where(backend, alltypes, df):
 
 
 # TODO: some of these are notimpl (datafusion) others are probably never
-@pytest.mark.notimpl(["mysql", "singlestoredb", "sqlite", "mssql", "druid", "exasol"])
+@pytest.mark.notimpl(["mysql", "singlestoredb", "sqlite", "mssql", "druid", "exasol", "db2"])
 @pytest.mark.notyet(
     ["flink"], "NaN is not supported in Flink SQL", raises=NotImplementedError
 )
@@ -797,6 +809,7 @@ def test_table_info_large(con):
         "trino",
         "flink",
         "athena",
+        "db2",
     ],
     raises=com.OperationNotDefinedError,
     reason="quantile and mode is not supported",
@@ -960,6 +973,7 @@ def test_table_describe(alltypes, selector, expected_columns):
         "sqlite",
         "athena",
         "materialize",
+        "db2",
     ],
     raises=com.OperationNotDefinedError,
     reason="quantile is not supported",
@@ -1176,6 +1190,7 @@ def test_exists(batting, awards_players, method_name):
         "druid",
         "oracle",
         "exasol",
+        "db2",
     ],
     raises=com.OperationNotDefinedError,
 )
@@ -1429,6 +1444,7 @@ def test_memtable_from_geopandas_dataframe(con, data_dir):
 
 
 @pytest.mark.notimpl(["oracle", "exasol"], raises=com.OperationNotDefinedError)
+@pytest.mark.notimpl(["db2"], raises=com.OperationNotDefinedError)
 @pytest.mark.notimpl(["druid"], raises=AssertionError)
 @pytest.mark.notyet(
     ["impala", "mssql", "mysql", "singlestoredb", "sqlite"],
@@ -1483,6 +1499,11 @@ def test_pivot_longer(backend):
     assert len(res.execute()) == len(expected)
 
 
+@pytest.mark.notimpl(
+    ["db2"],
+    raises=AssertionError,
+    reason="DB2 pivot_wider returns wrong count",
+)
 def test_pivot_wider(backend):
     diamonds = backend.diamonds
     expr = (
@@ -1525,6 +1546,11 @@ def test_select_distinct_order_by_alias(backend, con):
     backend.assert_frame_equal(res, sol)
 
 
+@pytest.mark.notimpl(
+    ["db2"],
+    raises=com.OperationNotDefinedError,
+    reason="DB2 does not support negated ORDER BY expressions",
+)
 def test_select_distinct_order_by_expr(backend, alltypes, df):
     res = alltypes.select("int_col").distinct().order_by(-_.int_col).to_pandas()
     sol = df[["int_col"]].drop_duplicates().sort_values("int_col", ascending=False)
@@ -1533,6 +1559,11 @@ def test_select_distinct_order_by_expr(backend, alltypes, df):
 
 @pytest.mark.notimpl(
     ["polars"], reason="We don't fuse these ops yet for non-SQL backends", strict=False
+)
+@pytest.mark.notimpl(
+    ["db2"],
+    raises=com.OperationNotDefinedError,
+    reason="DB2 does not support negated ORDER BY expressions",
 )
 @pytest.mark.parametrize(
     "ops",
@@ -1720,7 +1751,7 @@ def test_distinct_on_keep_is_none(backend, on):
     assert len(result) == len(expected)
 
 
-@pytest.mark.notimpl(["risingwave", "flink", "exasol"])
+@pytest.mark.notimpl(["risingwave", "flink", "exasol", "db2"])
 @pytest.mark.notimpl(
     ["materialize"],
     reason="Hash/digest functions not yet implemented in Materialize backend (could map to encode(digest(...), 'hex')).",
@@ -1835,6 +1866,7 @@ def test_hashbytes(backend, alltypes):
         "risingwave",
         "trino",
         "athena",
+        "db2",
     ]
 )
 @pytest.mark.notimpl(
@@ -1875,7 +1907,7 @@ def test_hexdigest(backend, alltypes):
                 pytest.mark.notyet(["bigquery"], raises=GoogleBadRequest),
                 pytest.mark.notimpl(["snowflake"], raises=AssertionError),
                 pytest.mark.never(
-                    ["exasol", "impala", "mssql", "mysql", "singlestoredb", "sqlite"],
+                    ["exasol", "impala", "mssql", "mysql", "singlestoredb", "sqlite", "db2"],
                     reason="backend doesn't support arrays",
                 ),
             ],
@@ -1903,6 +1935,7 @@ def test_hexdigest(backend, alltypes):
                         "mysql",
                         "singlestoredb",
                         "sqlite",
+                        "db2",
                     ],
                     reason="backend doesn't support structs",
                 ),
@@ -1949,6 +1982,9 @@ def test_cast(con, from_type, to_type, from_val, expected):
                     ["mysql", "singlestoredb"], reason="returns 20230101000000"
                 ),
                 pytest.mark.notyet(["mssql"], raises=PyODBCDataError),
+                pytest.mark.notimpl(
+                    ["db2"], reason="returns 20230101000000 instead of unix timestamp"
+                ),
             ],
         ),
     ],
@@ -1971,6 +2007,7 @@ def test_try_cast(con, from_val, to_type, expected):
         "postgres",
         "risingwave",
         "sqlite",
+        "db2",
     ]
 )
 @pytest.mark.notimpl(
@@ -2017,6 +2054,7 @@ def test_try_cast_null(con, from_val, to_type):
         "snowflake",
         "sqlite",
         "exasol",
+        "db2",
     ]
 )
 @pytest.mark.notimpl(
@@ -2045,6 +2083,7 @@ def test_try_cast_table(backend, con):
         "risingwave",
         "sqlite",
         "exasol",
+        "db2",
     ]
 )
 @pytest.mark.notimpl(
@@ -2417,6 +2456,11 @@ def test_dynamic_table_slice(backend, slc, expected_count_fn):
     raises=PsycoPgInternalError,
     reason="Materialize doesn't support subqueries in OFFSET clause.",
 )
+@pytest.mark.notimpl(
+    ["db2"],
+    raises=com.OperationNotDefinedError,
+    reason="DB2 does not support dynamic ROWS offset",
+)
 def test_dynamic_table_slice_with_computed_offset(backend):
     t = backend.functional_alltypes
 
@@ -2491,6 +2535,7 @@ def test_sample_memtable(con, backend):
         "pyspark",
         "databricks",
         "athena",
+        "db2",
     ]
 )
 @pytest.mark.never(
@@ -2641,7 +2686,7 @@ def test_select_sort_sort_deferred(backend, alltypes, df):
 
 
 @pytest.mark.notimpl(
-    ["druid", "athena"],
+    ["druid", "athena", "db2"],
     raises=AttributeError,
     reason="not yet added the data for this backend",
 )
@@ -2736,6 +2781,7 @@ def test_pivot_wider_empty_id_columns(con, backend, id_cols, monkeypatch):
         "exasol",
         "oracle",
         "flink",
+        "db2",
     ],
     raises=com.OperationNotDefinedError,
     reason="backend doesn't support Arbitrary agg",
@@ -2788,6 +2834,7 @@ def test_named_literal(con, backend):
         "trino",
         "athena",
         "materialize",
+        "db2",
     ],
     raises=com.OperationNotDefinedError,
     reason="quantile not implemented",
@@ -2846,11 +2893,21 @@ def test_comparison_with_decimal_literal(con):
 @pytest.mark.notyet(
     ["flink"], raises=ValueError, reason="flink doesn't support empty tables"
 )
+@pytest.mark.notimpl(
+    ["db2"],
+    raises=com.OperationNotDefinedError,
+    reason="DB2 does not support empty memtable with NULL schema",
+)
 def test_empty_memtable(con, input):
     t = ibis.memtable(input, schema={"x": "int64"})
     assert not len(con.to_pyarrow(t))
 
 
+@pytest.mark.notimpl(
+    ["db2"],
+    raises=com.OperationNotDefinedError,
+    reason="DB2 does not support this ORDER BY expression",
+)
 def test_order_by_preservation(con):
     tbl = ibis.memtable([{"id": 1, "col": "a"}, {"id": 2, "col": "b"}])
     expr = tbl.order_by("id").select("col").distinct()
