@@ -21,6 +21,7 @@ from ibis.backends.sql.datatypes import Db2Type
 from ibis.backends.sql.rewrites import (
     exclude_unsupported_window_frame_from_ops,
     lower_sample,
+    split_select_distinct_with_order_by,
 )
 
 
@@ -212,6 +213,8 @@ class Db2Compiler(SQLGlotCompiler):
         *SQLGlotCompiler.rewrites,
     )
 
+    post_rewrites = (split_select_distinct_with_order_by,)
+
     # Exclude operations from SIMPLE_OPS that need custom implementations
     SIMPLE_OPS = {
         k: v
@@ -228,6 +231,7 @@ class Db2Compiler(SQLGlotCompiler):
             ops.RegexSearch,         # → visit_RegexSearch (REGEXP_LIKE)
             ops.RegexExtract,        # → visit_RegexExtract (REGEXP_SUBSTR)
             ops.RandomScalar,        # → visit_RandomScalar (RAND())
+            ops.Xor,                 # → visit_Xor (raise — DB2 has no XOR keyword)
         )
     }
 
@@ -315,6 +319,18 @@ class Db2Compiler(SQLGlotCompiler):
     def visit_ArrayCollect(self, op, *, arg, where, order_by, include_null, distinct):
         """Visit an ArrayCollect operation."""
         raise com.OperationNotDefinedError("Db2 does not support array collect")
+
+    def visit_Array(self, op, *, exprs):
+        """Visit an Array operation."""
+        raise com.OperationNotDefinedError("Db2 does not support ARRAY literals")
+
+    def visit_StructColumn(self, op, *, names, values):
+        """Visit a StructColumn operation."""
+        raise com.OperationNotDefinedError("Db2 does not support STRUCT constructor")
+
+    def visit_Unnest(self, op, *, values):
+        """Visit an Unnest operation."""
+        raise com.OperationNotDefinedError("Db2 does not support UNNEST")
 
     def visit_Arbitrary(self, op, *, arg, where):
         """Visit an Arbitrary operation using MIN (Db2 does not have ANY_VALUE)."""
@@ -456,6 +472,10 @@ class Db2Compiler(SQLGlotCompiler):
         # Db2 doesn't have native UUID generation
         # Use combination of functions to generate UUID-like string
         return sge.Anonymous(this="GENERATE_UNIQUE", expressions=[])
+
+    def visit_Xor(self, op, *, left, right):
+        """Visit a Xor operation."""
+        raise com.OperationNotDefinedError("Db2 does not support the XOR operator")
 
     def visit_Hash(self, op, *, arg):
         """Visit a Hash operation."""
