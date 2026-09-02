@@ -18,7 +18,6 @@ from ibis.backends.sql import SQLBackend
 from ibis.backends.sql.compilers.db2 import Db2Compiler
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
     from urllib.parse import ParseResult
 
     import pandas as pd
@@ -671,38 +670,6 @@ class Backend(SQLBackend):
         df = df.astype(object).where(pd.notnull(df), None)
         return list(df.itertuples(index=False, name=None))
 
-    def to_pyarrow(
-        self,
-        expr: ir.Expr,
-        /,
-        *,
-        params: Mapping[ir.Scalar, Any] | None = None,
-        limit: int | str | None = None,
-        **kwargs: Any,
-    ):
-        """Execute expression and return results as PyArrow table.
-
-        Parameters
-        ----------
-        expr : ir.Expr
-            Ibis expression
-        params : Mapping[ir.Scalar, Any], optional
-            Query parameters
-        limit : int | str, optional
-            Result limit
-        **kwargs
-            Additional arguments
-
-        Returns
-        -------
-        pyarrow.Table
-            Query results
-        """
-        import pyarrow as pa
-
-        df = super().to_pandas(expr, params=params, limit=limit, **kwargs)
-        return pa.Table.from_pandas(df)
-
     def _get_schema_using_query(self, query: str) -> sch.Schema:
         """Get schema from a SQL query.
 
@@ -745,7 +712,13 @@ class Backend(SQLBackend):
         data = op.data.to_frame()
 
         if isinstance(data, pd.DataFrame):
-            schema = sch.infer(data)
+            # Use op.schema (the declared schema) instead of inferring from the
+            # DataFrame.  For empty tables, pandas assigns object dtype to every
+            # column; sch.infer then maps that to dt.Null, which Db2Type renders
+            # as the SQL keyword NULL — producing invalid DDL like
+            # "CREATE TABLE t (x NULL NULL)" and SQL0204N "NULL" is an undefined
+            # name.  The declared schema always carries the correct column types.
+            schema = op.schema
             # Use temp=False — DB2 GLOBAL TEMPORARY tables are session-scoped
             # and get destroyed by _reconnect() called inside create_table.
             # We use a permanent table instead and rely on the finalizer to drop it.

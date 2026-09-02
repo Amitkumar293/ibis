@@ -317,16 +317,19 @@ class Db2Compiler(SQLGlotCompiler):
         raise com.OperationNotDefinedError("Db2 does not support array collect")
 
     def visit_Arbitrary(self, op, *, arg, where):
-        """Visit an Arbitrary operation using ANY_VALUE (Db2 11.1+)."""
-        return self.agg.any_value(arg, where=where)
+        """Visit an Arbitrary operation using MIN (Db2 does not have ANY_VALUE)."""
+        return self.agg.min(arg, where=where)
 
     def visit_Median(self, op, *, arg, where):
         """Visit a Median operation."""
-        # Db2 uses MEDIAN function
-        func = sge.Anonymous(this="MEDIAN", expressions=[arg])
+        # Db2 uses MEDIAN function; fold where into arg as CASE (no FILTER support)
         if where is not None:
-            return sge.Filter(this=func, expression=sge.Where(this=where))
-        return func
+            arg = self.if_(where, arg, None)
+        return sge.Anonymous(this="MEDIAN", expressions=[arg])
+
+    def visit_ApproxMedian(self, op, *, arg, where):
+        """Visit an ApproxMedian operation using MEDIAN (Db2 has no APPROX_QUANTILE)."""
+        return self.visit_Median(op, arg=arg, where=where)
 
     def visit_Mode(self, op, *, arg, where):
         """Visit a Mode operation."""
@@ -340,12 +343,15 @@ class Db2Compiler(SQLGlotCompiler):
         """Visit an ArgMax operation."""
         raise com.OperationNotDefinedError("Db2 does not support arg_max")
 
+    def visit_CountDistinctStar(self, op, *, arg, where):
+        """Visit a CountDistinctStar operation."""
+        raise com.OperationNotDefinedError("Db2 does not support COUNT(DISTINCT *)")
+
     def visit_CountDistinct(self, op, *, arg, where):
         """Visit a CountDistinct operation."""
-        func = sge.Count(this=arg, distinct=True)
         if where is not None:
-            return sge.Filter(this=func, expression=sge.Where(this=where))
-        return func
+            arg = self.if_(where, arg, None)
+        return sge.Count(this=sge.Distinct(expressions=[arg]))
 
     def visit_ApproxCountDistinct(self, op, *, arg, where):
         """Visit an ApproxCountDistinct operation."""
