@@ -144,6 +144,7 @@ argidx_not_grouped_marks = [
     "oracle",
     "flink",
     "exasol",
+    "db2",
 ]
 
 
@@ -225,6 +226,7 @@ def test_aggregate_grouped(backend, alltypes, df, result_fn, expected_fn):
             lambda t, where: t.bool_col.nunique(where=where),
             lambda t, where: t.bool_col[where].dropna().nunique(),
             id="nunique",
+            marks=[pytest.mark.notimpl(["db2"], raises=AssertionError)],
         ),
         param(
             lambda t, where: t.bool_col.any(where=where),
@@ -359,6 +361,7 @@ def test_aggregate_grouped(backend, alltypes, df, result_fn, expected_fn):
                         "risingwave",
                         "athena",
                         "materialize",
+                        "db2",
                     ],
                     raises=com.OperationNotDefinedError,
                 ),
@@ -379,6 +382,7 @@ def test_aggregate_grouped(backend, alltypes, df, result_fn, expected_fn):
                         "oracle",
                         "exasol",
                         "flink",
+                        "db2",
                     ],
                     raises=com.OperationNotDefinedError,
                 ),
@@ -399,6 +403,7 @@ def test_aggregate_grouped(backend, alltypes, df, result_fn, expected_fn):
                         "oracle",
                         "exasol",
                         "flink",
+                        "db2",
                     ],
                     raises=com.OperationNotDefinedError,
                 ),
@@ -431,6 +436,7 @@ def test_aggregate_grouped(backend, alltypes, df, result_fn, expected_fn):
                     ],
                     raises=com.OperationNotDefinedError,
                 ),
+                pytest.mark.notimpl(["db2"], raises=IbmDb2Error),
                 pytest.mark.notimpl(
                     ["snowflake"],
                     raises=AssertionError,
@@ -474,6 +480,7 @@ def test_aggregate_grouped(backend, alltypes, df, result_fn, expected_fn):
             lambda t, where: t.string_col[where].nunique(),
             id="approx_nunique",
             marks=[
+                pytest.mark.notimpl(["db2"], raises=IbmDb2Error),
                 pytest.mark.xfail_version(
                     duckdb=["duckdb>=1.1"],
                     raises=AssertionError,
@@ -492,6 +499,9 @@ def test_aggregate_grouped(backend, alltypes, df, result_fn, expected_fn):
                     raises=com.OperationNotDefinedError,
                 ),
                 pytest.mark.notimpl(["druid"], strict=False, raises=AssertionError),
+                pytest.mark.notimpl(
+                    ["db2"], raises=com.OperationNotDefinedError
+                ),
                 pytest.mark.notyet(
                     ["impala", "pyspark", "flink", "materialize"],
                     raises=com.OperationNotDefinedError,
@@ -506,6 +516,9 @@ def test_aggregate_grouped(backend, alltypes, df, result_fn, expected_fn):
                 pytest.mark.notimpl(
                     ["mssql", "exasol"],
                     raises=com.OperationNotDefinedError,
+                ),
+                pytest.mark.notimpl(
+                    ["db2"], raises=com.OperationNotDefinedError
                 ),
                 pytest.mark.notyet(
                     ["impala", "pyspark", "flink", "materialize"],
@@ -522,6 +535,9 @@ def test_aggregate_grouped(backend, alltypes, df, result_fn, expected_fn):
                     ["mssql", "exasol"],
                     raises=com.OperationNotDefinedError,
                 ),
+                pytest.mark.notimpl(
+                    ["db2"], raises=com.OperationNotDefinedError
+                ),
                 pytest.mark.notyet(
                     ["impala", "pyspark", "flink", "athena", "materialize"],
                     raises=com.OperationNotDefinedError,
@@ -532,6 +548,7 @@ def test_aggregate_grouped(backend, alltypes, df, result_fn, expected_fn):
             lambda t, where: t.count(where=where),
             lambda t, where: len(t[where]),
             id="count_star",
+            marks=[pytest.mark.notimpl(["db2"], raises=IbmDb2Error)],
         ),
     ],
 )
@@ -712,6 +729,11 @@ def test_first_last_ordered(alltypes, method, filtered, include_null):
     raises=PsycoPg2InternalError,
     reason="Feature is not yet implemented:",
 )
+@pytest.mark.notimpl(
+    ["db2"],
+    raises=com.OperationNotDefinedError,
+    reason="Db2 does not support first/last aggregation",
+)
 @pytest.mark.parametrize(
     "method,expected",
     [
@@ -784,6 +806,7 @@ def test_argmin_argmax(alltypes, method, filtered, null_result):
         "exasol",
         "flink",
         "risingwave",
+        "db2",
     ],
     raises=com.OperationNotDefinedError,
 )
@@ -904,6 +927,7 @@ def test_count_distinct_star(alltypes, df, ibis_cond, pandas_cond):
                         "polars",
                         "druid",
                         "oracle",
+                        "db2",
                     ],
                     raises=com.OperationNotDefinedError,
                 ),
@@ -1023,6 +1047,7 @@ def test_approx_quantile(con, filtered, multi):
                     ["polars", "druid"],
                     raises=com.OperationNotDefinedError,
                 ),
+                pytest.mark.notimpl(["db2"], raises=IbmDb2Error),
                 pytest.mark.notyet(
                     ["mysql", "singlestoredb", "impala", "sqlite", "flink"],
                     raises=com.OperationNotDefinedError,
@@ -1043,6 +1068,7 @@ def test_approx_quantile(con, filtered, multi):
                     ["polars", "druid"],
                     raises=com.OperationNotDefinedError,
                 ),
+                pytest.mark.notimpl(["db2"], raises=IbmDb2Error),
                 pytest.mark.notyet(
                     ["mysql", "singlestoredb", "impala", "sqlite", "flink"],
                     raises=com.OperationNotDefinedError,
@@ -1122,6 +1148,7 @@ def test_approx_quantile(con, filtered, multi):
                     ["polars", "druid"],
                     raises=com.OperationNotDefinedError,
                 ),
+                pytest.mark.notimpl(["db2"], raises=IbmDb2Error),
                 pytest.mark.notyet(
                     ["mysql", "singlestoredb", "impala", "sqlite", "flink"],
                     raises=com.OperationNotDefinedError,
@@ -1374,7 +1401,12 @@ def test_date_quantile(alltypes):
 @pytest.mark.parametrize(
     ("ibis_cond", "pandas_cond"),
     [
-        param(lambda _: None, lambda _: slice(None), id="no_cond"),
+        param(
+            lambda _: None,
+            lambda _: slice(None),
+            id="no_cond",
+            marks=[pytest.mark.notimpl(["db2"], raises=IbmDb2Error)],
+        ),
         param(
             lambda t: t.string_col.isin(["1", "7"]),
             lambda t: t.string_col.isin(["1", "7"]),

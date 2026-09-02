@@ -23,6 +23,7 @@ from ibis.backends.tests.errors import (
     ClickHouseDatabaseError,
     ExaQueryError,
     GoogleBadRequest,
+    IbmDb2Error,
     ImpalaHiveServer2Error,
     MySQLProgrammingError,
     OracleDatabaseError,
@@ -208,6 +209,7 @@ def test_isna(backend, alltypes, col, value, filt):
                         "bigquery",
                         "clickhouse",
                         "datafusion",
+                        "db2",
                         "duckdb",
                         "impala",
                         "postgres",
@@ -1499,11 +1501,6 @@ def test_pivot_longer(backend):
     assert len(res.execute()) == len(expected)
 
 
-@pytest.mark.notimpl(
-    ["db2"],
-    raises=AssertionError,
-    reason="DB2 pivot_wider returns wrong count",
-)
 def test_pivot_wider(backend):
     diamonds = backend.diamonds
     expr = (
@@ -1546,11 +1543,6 @@ def test_select_distinct_order_by_alias(backend, con):
     backend.assert_frame_equal(res, sol)
 
 
-@pytest.mark.notimpl(
-    ["db2"],
-    raises=com.OperationNotDefinedError,
-    reason="DB2 does not support negated ORDER BY expressions",
-)
 def test_select_distinct_order_by_expr(backend, alltypes, df):
     res = alltypes.select("int_col").distinct().order_by(-_.int_col).to_pandas()
     sol = df[["int_col"]].drop_duplicates().sort_values("int_col", ascending=False)
@@ -1559,11 +1551,6 @@ def test_select_distinct_order_by_expr(backend, alltypes, df):
 
 @pytest.mark.notimpl(
     ["polars"], reason="We don't fuse these ops yet for non-SQL backends", strict=False
-)
-@pytest.mark.notimpl(
-    ["db2"],
-    raises=com.OperationNotDefinedError,
-    reason="DB2 does not support negated ORDER BY expressions",
 )
 @pytest.mark.parametrize(
     "ops",
@@ -2378,6 +2365,11 @@ def test_static_table_slice(backend, slc, expected_count_fn):
     reason="pyspark and databricks don't support dynamic limit/offset",
 )
 @pytest.mark.notyet(["flink"], reason="flink doesn't support dynamic limit/offset")
+@pytest.mark.notimpl(
+    ["db2"],
+    raises=IbmDb2Error,
+    reason="DB2 does not support dynamic ROWS offset",
+)
 def test_dynamic_table_slice(backend, slc, expected_count_fn):
     t = backend.functional_alltypes
 
@@ -2458,7 +2450,7 @@ def test_dynamic_table_slice(backend, slc, expected_count_fn):
 )
 @pytest.mark.notimpl(
     ["db2"],
-    raises=com.OperationNotDefinedError,
+    raises=IbmDb2Error,
     reason="DB2 does not support dynamic ROWS offset",
 )
 def test_dynamic_table_slice_with_computed_offset(backend):
@@ -2686,7 +2678,7 @@ def test_select_sort_sort_deferred(backend, alltypes, df):
 
 
 @pytest.mark.notimpl(
-    ["druid", "athena", "db2"],
+    ["druid", "athena"],
     raises=AttributeError,
     reason="not yet added the data for this backend",
 )
@@ -2781,7 +2773,6 @@ def test_pivot_wider_empty_id_columns(con, backend, id_cols, monkeypatch):
         "exasol",
         "oracle",
         "flink",
-        "db2",
     ],
     raises=com.OperationNotDefinedError,
     reason="backend doesn't support Arbitrary agg",
@@ -2893,21 +2884,11 @@ def test_comparison_with_decimal_literal(con):
 @pytest.mark.notyet(
     ["flink"], raises=ValueError, reason="flink doesn't support empty tables"
 )
-@pytest.mark.notimpl(
-    ["db2"],
-    raises=com.OperationNotDefinedError,
-    reason="DB2 does not support empty memtable with NULL schema",
-)
 def test_empty_memtable(con, input):
     t = ibis.memtable(input, schema={"x": "int64"})
     assert not len(con.to_pyarrow(t))
 
 
-@pytest.mark.notimpl(
-    ["db2"],
-    raises=com.OperationNotDefinedError,
-    reason="DB2 does not support this ORDER BY expression",
-)
 def test_order_by_preservation(con):
     tbl = ibis.memtable([{"id": 1, "col": "a"}, {"id": 2, "col": "b"}])
     expr = tbl.order_by("id").select("col").distinct()
