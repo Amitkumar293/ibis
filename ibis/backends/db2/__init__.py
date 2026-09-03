@@ -492,13 +492,15 @@ class Backend(SQLBackend):
             if isinstance(col_type, str):
                 col_type = dt.dtype(col_type)
             db2_type = type_mapper.to_string(col_type)
-            nullable = "NULL" if col_type.nullable else "NOT NULL"
+            # DB2 does not accept bare NULL as a column constraint — nullable is
+            # the default, so only emit NOT NULL for non-nullable columns.
+            null_constraint = "" if col_type.nullable else " NOT NULL"
             # sg.to_identifier(..., quoted=True) is the same quoting primitive
             # SQLGlot uses for column references, so column names always match
             quoted_col_name = sg.to_identifier(
                 col_name, quoted=self.compiler.quoted
             ).sql(self.dialect)
-            col_defs.append(f"{quoted_col_name} {db2_type} {nullable}")
+            col_defs.append(f"{quoted_col_name} {db2_type}{null_constraint}")
 
         columns_sql = ", ".join(col_defs)
         # DB2 requires an explicit tablespace with sufficient page size.
