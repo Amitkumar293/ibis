@@ -103,6 +103,7 @@ def _create_temp_table_with_schema(backend, con, temp_table_name, schema, data=N
     ["flink"],
     reason="Flink backend supports creating only TEMPORARY VIEW for in-memory data.",
 )
+@pytest.mark.notimpl(["db2"])
 def test_create_table(backend, con, temp_table, func, sch):
     df = pd.DataFrame({"first_name": ["A", "B", "C"], "salary": [100.0, 200.0, 300.0]})
 
@@ -186,6 +187,7 @@ def test_create_table(backend, con, temp_table, func, sch):
     ],
 )
 @pytest.mark.notimpl(["druid"])
+@pytest.mark.notimpl(["db2"])
 def test_create_table_overwrite_temp(backend, con, temp_table, temp, overwrite):
     df = pd.DataFrame(
         {
@@ -218,6 +220,7 @@ def test_create_table_overwrite_temp(backend, con, temp_table, temp, overwrite):
     raises=com.UnsupportedOperationError,
     reason="no reasonable implementation is supported by the database",
 )
+@pytest.mark.notimpl(["db2"])
 def test_load_data(backend, con, temp_table, lamduh):
     sch = ibis.schema(
         [
@@ -305,6 +308,7 @@ backend_type_mapping = {
     raises=com.IbisError,
     reason="`tbl_properties` is required when creating table with schema",
 )
+@pytest.mark.notimpl(["db2"])
 def test_create_table_from_schema(con, new_schema, temp_table):
     new_table = con.create_table(temp_table, schema=new_schema)
     backend_mapping = backend_type_mapping.get(con.name, {})
@@ -347,6 +351,7 @@ def test_create_table_from_schema(con, new_schema, temp_table):
     raises=com.IbisError,
     reason="`tbl_properties` is required when creating table with schema",
 )
+@pytest.mark.notimpl(["db2"])
 def test_create_temporary_table_from_schema(con_no_data, new_schema):
     if con_no_data.name == "snowflake" and os.environ.get("SNOWFLAKE_SNOWPARK"):
         with pytest.raises(
@@ -438,6 +443,7 @@ def test_nullable_input_output(con, temp_table):
 
 
 @mark.notimpl(["druid"])
+@pytest.mark.notimpl(["db2"])
 def test_create_drop_view(ddl_con, temp_view):
     # setup
     table_name = "functional_alltypes"
@@ -664,6 +670,7 @@ def test_insert_overwrite_from_expr(
     reason="Materialize restricts INSERT operations within transaction blocks (write-only transactions only).",
     # Ref: https://materialize.com/docs/sql/begin/
 )
+@pytest.mark.notimpl(["db2"])
 def test_insert_overwrite_from_list(con, employee_data_1_temp_table):
     def _emp(a, b, c, d):
         return dict(first_name=a, last_name=b, department_name=c, salary=d)
@@ -806,6 +813,7 @@ def test_upsert_from_memtable(backend, con, temp_table, sch, expectation):
     reason="Materialize restricts INSERT operations within transaction blocks (write-only transactions only).",
     # Ref: https://materialize.com/docs/sql/begin/
 )
+@pytest.mark.notimpl(["db2"])
 def test_insert_from_memtable(con, temp_table):
     df = pd.DataFrame({"x": range(3)})
     table_name = temp_table
@@ -927,6 +935,7 @@ def test_list_database_contents(con):
     raises=com.IbisError,
     reason="`tbl_properties` is required when creating table with schema",
 )
+@pytest.mark.notimpl(["db2"])
 def test_unsigned_integer_type(con, temp_table):
     con.create_table(
         temp_table,
@@ -1214,6 +1223,7 @@ def test_self_join_memory_table(backend, con, monkeypatch):
     ["flink"],
     reason="Flink backend supports creating only TEMPORARY VIEW for in-memory data.",
 )
+@pytest.mark.notimpl(["db2"])
 def test_create_table_in_memory(con, obj, table_name, monkeypatch):
     monkeypatch.setattr(ibis.options, "default_backend", con)
     table_name = gen_name(table_name)
@@ -1525,6 +1535,7 @@ def test_set_backend_url(url, monkeypatch):
     reason="Materialize timestamp precision is limited to 0-6 (microsecond precision max), not 0-9 like Postgres.",
     # Ref: https://materialize.com/docs/sql/types/timestamp/
 )
+@pytest.mark.notimpl(["db2"])
 def test_create_table_timestamp(con, temp_table):
     schema = ibis.schema(
         dict(zip(string.ascii_letters, map("timestamp({:d})".format, range(10))))
@@ -1559,6 +1570,7 @@ def gen_test_name(con: BaseBackend):
         "If `obj` is of `ir.Table`, the operation must be `InMemoryTable`."
     ),
 )
+@pytest.mark.notimpl(["db2"])
 def test_overwrite(ddl_con, monkeypatch):
     monkeypatch.setattr(ibis.options, "default_backend", ddl_con)
 
@@ -1758,6 +1770,7 @@ def test_close_connection(con):
     reason="snowflake uses a custom pyarrow extension type for JSON pretty printing",
 )
 @pytest.mark.notimpl(["athena"], raises=AttributeError, reason="not yet implemented")
+@pytest.mark.notimpl(["db2"])
 def test_json_to_pyarrow(con):
     t = con.tables.json_t
     table = t.to_pyarrow()
@@ -1810,6 +1823,7 @@ def test_json_to_pyarrow(con):
 @pytest.mark.notyet(
     ["flink"], raises=com.IbisError, reason="no persistent temp table support"
 )
+@pytest.mark.notimpl(["db2"])
 def test_schema_with_caching(alltypes):
     t1 = alltypes.limit(5).select("bigint_col", "string_col")
     t2 = alltypes.limit(5).select("string_col", "bigint_col")
@@ -1855,6 +1869,7 @@ def test_schema_with_caching(alltypes):
         ),
     ],
 )
+@pytest.mark.notimpl(["db2"])
 def test_insert_using_col_name_not_position(con, first_row, second_row, monkeypatch):
     monkeypatch.setattr(ibis.options, "default_backend", con)
     table_name = gen_name("table")
@@ -1877,6 +1892,7 @@ DEFAULT_CON_ATTR = "con"
 
 @pytest.mark.parametrize("top_level", [True, False])
 @pytest.mark.never(["polars"], reason="don't have a connection concept")
+@pytest.mark.notimpl(["db2"])
 def test_from_connection(con, top_level):
     backend = getattr(ibis, con.name) if top_level else type(con)
     new_con = backend.from_connection(getattr(con, CON_ATTR.get(con.name, "con")))
@@ -1884,6 +1900,7 @@ def test_from_connection(con, top_level):
     assert result == 1
 
 
+@pytest.mark.notimpl(["db2"])
 def test_table_not_found(con):
     with pytest.raises(com.TableNotFound):
         con.table(gen_name("table_not_found"))
@@ -1984,6 +2001,7 @@ def test_cross_database_join(con_create_database, monkeypatch):
     reason="Materialize restricts INSERT operations within transaction blocks (write-only transactions only).",
     # Ref: https://materialize.com/docs/sql/begin/
 )
+@pytest.mark.notimpl(["db2"])
 def test_insert_into_table_missing_columns(con, temp_table):
     db = getattr(con, "current_database", None)
 
