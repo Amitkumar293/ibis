@@ -226,7 +226,7 @@ def test_aggregate_grouped(backend, alltypes, df, result_fn, expected_fn):
             lambda t, where: t.bool_col.nunique(where=where),
             lambda t, where: t.bool_col[where].dropna().nunique(),
             id="nunique",
-            marks=[pytest.mark.notimpl(["db2"], raises=AssertionError)],
+            marks=[pytest.mark.notimpl(["db2"], raises=IbmDb2Error)],
         ),
         param(
             lambda t, where: t.bool_col.any(where=where),
@@ -480,7 +480,6 @@ def test_aggregate_grouped(backend, alltypes, df, result_fn, expected_fn):
             lambda t, where: t.string_col[where].nunique(),
             id="approx_nunique",
             marks=[
-                pytest.mark.notimpl(["db2"], raises=IbmDb2Error),
                 pytest.mark.xfail_version(
                     duckdb=["duckdb>=1.1"],
                     raises=AssertionError,
@@ -548,7 +547,6 @@ def test_aggregate_grouped(backend, alltypes, df, result_fn, expected_fn):
             lambda t, where: t.count(where=where),
             lambda t, where: len(t[where]),
             id="count_star",
-            marks=[pytest.mark.notimpl(["db2"], raises=IbmDb2Error)],
         ),
     ],
 )
@@ -560,6 +558,7 @@ def test_aggregate_grouped(backend, alltypes, df, result_fn, expected_fn):
             lambda t: t.string_col.isin(["1", "7"]),
             lambda t: t.string_col.isin(["1", "7"]),
             id="is_in",
+            marks=[pytest.mark.notimpl(["db2"], raises=IbmDb2Error)],
         ),
     ],
 )
@@ -729,11 +728,6 @@ def test_first_last_ordered(alltypes, method, filtered, include_null):
     raises=PsycoPg2InternalError,
     reason="Feature is not yet implemented:",
 )
-@pytest.mark.notimpl(
-    ["db2"],
-    raises=com.OperationNotDefinedError,
-    reason="Db2 does not support first/last aggregation",
-)
 @pytest.mark.parametrize(
     "method,expected",
     [
@@ -806,7 +800,6 @@ def test_argmin_argmax(alltypes, method, filtered, null_result):
         "exasol",
         "flink",
         "risingwave",
-        "db2",
     ],
     raises=com.OperationNotDefinedError,
 )
@@ -1047,7 +1040,6 @@ def test_approx_quantile(con, filtered, multi):
                     ["polars", "druid"],
                     raises=com.OperationNotDefinedError,
                 ),
-                pytest.mark.notimpl(["db2"], raises=IbmDb2Error),
                 pytest.mark.notyet(
                     ["mysql", "singlestoredb", "impala", "sqlite", "flink"],
                     raises=com.OperationNotDefinedError,
@@ -1068,7 +1060,6 @@ def test_approx_quantile(con, filtered, multi):
                     ["polars", "druid"],
                     raises=com.OperationNotDefinedError,
                 ),
-                pytest.mark.notimpl(["db2"], raises=IbmDb2Error),
                 pytest.mark.notyet(
                     ["mysql", "singlestoredb", "impala", "sqlite", "flink"],
                     raises=com.OperationNotDefinedError,
@@ -1148,7 +1139,6 @@ def test_approx_quantile(con, filtered, multi):
                     ["polars", "druid"],
                     raises=com.OperationNotDefinedError,
                 ),
-                pytest.mark.notimpl(["db2"], raises=IbmDb2Error),
                 pytest.mark.notyet(
                     ["mysql", "singlestoredb", "impala", "sqlite", "flink"],
                     raises=com.OperationNotDefinedError,
@@ -1273,9 +1263,10 @@ def test_median(alltypes, df):
     ["bigquery", "druid", "sqlite"], raises=com.OperationNotDefinedError
 )
 @pytest.mark.notyet(
-    ["impala", "mysql", "singlestoredb", "mssql", "trino", "flink", "athena", "db2"],
+    ["impala", "mysql", "singlestoredb", "mssql", "trino", "flink", "athena"],
     raises=com.OperationNotDefinedError,
 )
+@pytest.mark.notimpl(["db2"], raises=SystemError)
 @pytest.mark.notyet(
     ["clickhouse"],
     raises=ClickHouseDatabaseError,
@@ -1401,12 +1392,7 @@ def test_date_quantile(alltypes):
 @pytest.mark.parametrize(
     ("ibis_cond", "pandas_cond"),
     [
-        param(
-            lambda _: None,
-            lambda _: slice(None),
-            id="no_cond",
-            marks=[pytest.mark.notimpl(["db2"], raises=IbmDb2Error)],
-        ),
+        param(lambda _: None, lambda _: slice(None), id="no_cond"),
         param(
             lambda t: t.string_col.isin(["1", "7"]),
             lambda t: t.string_col.isin(["1", "7"]),
