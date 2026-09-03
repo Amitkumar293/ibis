@@ -23,6 +23,7 @@ from ibis.backends.tests.errors import (
     DuckDBInvalidInputException,
     ExaQueryError,
     GoogleBadRequest,
+    IbmDb2Error,
     ImpalaHiveServer2Error,
     ImpalaOperationalError,
     MySQLOperationalError,
@@ -191,6 +192,7 @@ def test_extract_iso_year(backend, alltypes, df, transform):
     raises=com.OperationNotDefinedError,
     reason="backend doesn't appear to support this operation directly",
 )
+@pytest.mark.notimpl(["db2"], raises=com.OperationNotDefinedError)
 def test_iso_year_does_not_match_date_year(con):
     expr = ibis.date("2022-01-01").iso_year()
     assert con.execute(expr) == 2021
@@ -220,6 +222,7 @@ mark_notyet_risingwave_14670 = pytest.mark.notyet(
                 pytest.mark.notimpl(
                     ["druid", "oracle"], raises=com.OperationNotDefinedError
                 ),
+                pytest.mark.notimpl(["db2"], raises=com.OperationNotDefinedError),
             ],
         ),
         param(
@@ -257,7 +260,7 @@ def test_timestamp_extract_literal(con, func, expected):
     reason="Streaming database does not guarantee row order without ORDER BY",
     strict=False,
 )
-@pytest.mark.notimpl(["oracle", "druid"], raises=com.OperationNotDefinedError)
+@pytest.mark.notimpl(["oracle", "druid", "db2"], raises=com.OperationNotDefinedError)
 @pytest.mark.notyet(
     ["pyspark", "databricks"],
     raises=com.UnsupportedOperationError,
@@ -302,7 +305,8 @@ def test_timestamp_extract_milliseconds(backend, alltypes, df):
     reason="Streaming database does not guarantee row order without ORDER BY",
     strict=False,
 )
-@pytest.mark.notimpl(["oracle", "db2"], raises=com.OperationNotDefinedError)
+@pytest.mark.notimpl(["oracle"], raises=com.OperationNotDefinedError)
+@pytest.mark.notimpl(["db2"], raises=IbmDb2Error)
 @pytest.mark.notimpl(["druid"], raises=PyDruidProgrammingError)
 @pytest.mark.notimpl(
     ["bigquery"],
@@ -456,6 +460,7 @@ def test_timestamp_extract_week_of_year(backend, alltypes, df):
     reason="Streaming database does not guarantee row order without ORDER BY",
     strict=False,
 )
+@pytest.mark.notimpl(["db2"], raises=ValueError)
 def test_timestamp_truncate(backend, alltypes, df, ibis_unit, pandas_unit):
     expr = alltypes.timestamp_col.truncate(ibis_unit).name("tmp")
 
@@ -499,6 +504,7 @@ def test_timestamp_truncate(backend, alltypes, df, ibis_unit, pandas_unit):
     strict=False,
 )
 @pytest.mark.notimpl(["druid"], raises=com.OperationNotDefinedError)
+@pytest.mark.notimpl(["db2"], raises=ValueError)
 def test_date_truncate(backend, alltypes, df, unit):
     expr = alltypes.timestamp_col.date().truncate(unit).name("tmp")
 
@@ -626,6 +632,7 @@ def test_date_truncate(backend, alltypes, df, unit):
     strict=False,
 )
 @pytest.mark.notimpl(["druid", "exasol"], raises=com.OperationNotDefinedError)
+@pytest.mark.notimpl(["db2"], raises=IbmDb2Error)
 def test_integer_to_interval_timestamp(
     backend, con, alltypes, df, unit, displacement_type
 ):
@@ -707,6 +714,7 @@ def test_integer_to_interval_timestamp(
 )
 @pytest.mark.notimpl(["druid"], raises=com.OperationNotDefinedError)
 @pytest.mark.notimpl(["exasol"], raises=com.OperationNotDefinedError)
+@pytest.mark.notimpl(["db2"], raises=IbmDb2Error)
 def test_integer_to_interval_date(backend, con, alltypes, df, unit):
     interval = alltypes.int_col.as_interval(unit)
     month = alltypes.date_string_col[:2]
@@ -750,6 +758,7 @@ timestamp_value = pd.Timestamp("2018-01-01 18:18:18")
             marks=[
                 pytest.mark.notimpl(["exasol"], raises=com.OperationNotDefinedError),
                 pytest.mark.notimpl(["druid"], raises=PyDruidProgrammingError),
+                pytest.mark.notimpl(["db2"], raises=IbmDb2Error),
                 sqlite_without_ymd_intervals,
             ],
         ),
@@ -774,6 +783,7 @@ timestamp_value = pd.Timestamp("2018-01-01 18:18:18")
                     raises=ValidationError,
                     reason="Given argument with datatype interval('D') is not implicitly castable to string",
                 ),
+                pytest.mark.notimpl(["db2"], raises=IbmDb2Error),
                 sqlite_without_ymd_intervals,
             ],
         ),
@@ -793,6 +803,7 @@ timestamp_value = pd.Timestamp("2018-01-01 18:18:18")
                 pytest.mark.notimpl(["impala"], raises=com.UnsupportedOperationError),
                 pytest.mark.notimpl(["mysql", "singlestoredb"], raises=sg.ParseError),
                 pytest.mark.notimpl(["druid"], raises=PyDruidProgrammingError),
+                pytest.mark.notimpl(["db2"], raises=IbmDb2Error),
                 sqlite_without_ymd_intervals,
             ],
         ),
@@ -803,6 +814,7 @@ timestamp_value = pd.Timestamp("2018-01-01 18:18:18")
             marks=[
                 pytest.mark.notimpl(["exasol"], raises=com.OperationNotDefinedError),
                 pytest.mark.notimpl(["druid"], raises=PyDruidProgrammingError),
+                pytest.mark.notimpl(["db2"], raises=IbmDb2Error),
                 sqlite_without_ymd_intervals,
             ],
         ),
@@ -814,6 +826,7 @@ timestamp_value = pd.Timestamp("2018-01-01 18:18:18")
                 pytest.mark.notimpl(
                     ["exasol", "druid"], raises=com.OperationNotDefinedError
                 ),
+                pytest.mark.notimpl(["db2"], raises=IbmDb2Error),
                 sqlite_without_ymd_intervals,
             ],
         ),
@@ -825,6 +838,7 @@ timestamp_value = pd.Timestamp("2018-01-01 18:18:18")
                 pytest.mark.notimpl(
                     ["exasol", "druid"], raises=com.OperationNotDefinedError
                 ),
+                pytest.mark.notimpl(["db2"], raises=IbmDb2Error),
                 sqlite_without_ymd_intervals,
             ],
         ),
@@ -839,6 +853,7 @@ timestamp_value = pd.Timestamp("2018-01-01 18:18:18")
                     ["snowflake", "sqlite", "exasol", "mssql"],
                     raises=com.OperationNotDefinedError,
                 ),
+                pytest.mark.notimpl(["db2"], raises=AssertionError),
                 pytest.mark.notimpl(
                     ["athena"],
                     raises=PyAthenaOperationalError,
@@ -883,6 +898,7 @@ timestamp_value = pd.Timestamp("2018-01-01 18:18:18")
                     ["druid", "flink", "mssql"],
                     raises=com.OperationNotDefinedError,
                 ),
+                pytest.mark.notimpl(["db2"], raises=IbmDb2Error),
                 pytest.mark.notimpl(
                     ["athena"],
                     raises=PyAthenaOperationalError,
@@ -994,6 +1010,7 @@ minus = lambda t, td: t.timestamp_col - pd.Timedelta(td)
 )
 @pytest.mark.notimpl(["druid"], raises=PyDruidProgrammingError)
 @pytest.mark.notimpl(["exasol"], raises=com.OperationNotDefinedError)
+@pytest.mark.notimpl(["db2"], raises=IbmDb2Error)
 def test_temporal_binop_pandas_timedelta(
     backend, con, alltypes, df, timedelta, temporal_fn
 ):
@@ -1012,6 +1029,7 @@ def test_temporal_binop_pandas_timedelta(
     raises=PyDruidProgrammingError,
     reason="Invalid SQL; druid doesn't know about TIMESTAMPTZ",
 )
+@pytest.mark.notimpl(["db2"], raises=SystemError)
 def test_timestamp_comparison_filter(backend, con, alltypes, df, func_name):
     ts = pd.Timestamp("20100302", tz="UTC").to_pydatetime()
 
@@ -1067,6 +1085,7 @@ def test_timestamp_comparison_filter_numpy(backend, con, alltypes, df, func_name
     strict=False,
 )
 @pytest.mark.notimpl(["exasol", "druid"], raises=com.OperationNotDefinedError)
+@pytest.mark.notimpl(["db2"], raises=IbmDb2Error)
 @sqlite_without_ymd_intervals
 def test_interval_add_cast_scalar(backend, alltypes):
     timestamp_date = alltypes.timestamp_col.date()
@@ -1078,6 +1097,7 @@ def test_interval_add_cast_scalar(backend, alltypes):
 
 
 @pytest.mark.notimpl(["exasol", "druid"], raises=com.OperationNotDefinedError)
+@pytest.mark.notimpl(["db2"], raises=IbmDb2Error)
 @pytest.mark.never(
     ["materialize"],
     raises=AssertionError,
@@ -1144,6 +1164,7 @@ def test_interval_add_cast_column(backend, alltypes, df):
     strict=False,
 )
 @pytest.mark.notimpl(["druid", "exasol"], raises=com.OperationNotDefinedError)
+@pytest.mark.notimpl(["db2"], raises=SystemError)
 def test_strftime(backend, alltypes, df, expr_fn, pandas_pattern):
     expr = expr_fn(alltypes)
     expected = df.timestamp_col.dt.strftime(pandas_pattern).rename("formatted")
@@ -1240,7 +1261,7 @@ unit_factors = {"s": 10**9, "ms": 10**6, "us": 10**3, "ns": 1}
     strict=False,
 )
 @pytest.mark.notimpl(
-    ["mysql", "singlestoredb", "postgres", "risingwave", "sqlite", "oracle"],
+    ["mysql", "singlestoredb", "postgres", "risingwave", "sqlite", "oracle", "db2"],
     raises=com.OperationNotDefinedError,
 )
 @pytest.mark.notimpl(["exasol"], raises=com.OperationNotDefinedError)
@@ -1336,6 +1357,7 @@ def test_integer_to_timestamp(backend, con, unit):
     raises=com.OperationNotDefinedError,
 )
 @pytest.mark.notimpl(["exasol"], raises=com.OperationNotDefinedError)
+@pytest.mark.notimpl(["db2"], raises=SystemError)
 def test_string_as_timestamp(alltypes, fmt):
     table = alltypes
     result = table.mutate(date=table.date_string_col.as_timestamp(fmt)).execute()
@@ -1427,6 +1449,7 @@ def test_string_as_timestamp_with_time(con):
     raises=com.OperationNotDefinedError,
 )
 @pytest.mark.notimpl(["exasol"], raises=com.OperationNotDefinedError)
+@pytest.mark.notimpl(["db2"], raises=IbmDb2Error)
 def test_string_as_date(alltypes, fmt):
     table = alltypes
     result = table.mutate(date=table.date_string_col.as_date(fmt)).execute()
@@ -1460,6 +1483,7 @@ def test_string_as_date(alltypes, fmt):
     reason="Materialize doesn't support time string parsing - backend limitation",
 )
 @pytest.mark.notimpl(["sqlite"], raises=com.UnsupportedOperationError)
+@pytest.mark.notimpl(["db2"], raises=ValueError)
 def test_string_as_time(backend, alltypes):
     fmt = "%H:%M:%S"
     table = alltypes.mutate(
@@ -1611,6 +1635,7 @@ DATE_BACKEND_TYPES = {
 
 
 @pytest.mark.notimpl(["exasol", "druid"], raises=com.OperationNotDefinedError)
+@pytest.mark.notimpl(["db2"], raises=IbmDb2Error)
 def test_date_literal(con, backend):
     expr = ibis.date(2022, 2, 4)
     result = con.execute(expr)
@@ -1639,7 +1664,7 @@ TIMESTAMP_BACKEND_TYPES = {
 
 
 @pytest.mark.notimpl(
-    ["pyspark", "mysql", "singlestoredb", "exasol", "oracle", "databricks"],
+    ["pyspark", "mysql", "singlestoredb", "exasol", "oracle", "databricks", "db2"],
     raises=com.OperationNotDefinedError,
 )
 @pytest.mark.notyet(["impala"], raises=com.OperationNotDefinedError)
@@ -1656,7 +1681,7 @@ def test_timestamp_literal(con, backend):
 
 
 @pytest.mark.notimpl(
-    ["mysql", "singlestoredb", "pyspark", "exasol", "databricks"],
+    ["mysql", "singlestoredb", "pyspark", "exasol", "databricks", "db2"],
     raises=com.OperationNotDefinedError,
 )
 @pytest.mark.notyet(["impala", "oracle"], raises=com.OperationNotDefinedError)
@@ -1719,7 +1744,7 @@ TIME_BACKEND_TYPES = {
 
 
 @pytest.mark.notimpl(
-    ["datafusion", "pyspark", "mysql", "singlestoredb", "oracle", "databricks"],
+    ["datafusion", "pyspark", "mysql", "singlestoredb", "oracle", "databricks", "db2"],
     raises=com.OperationNotDefinedError,
 )
 @pytest.mark.notyet(
@@ -1771,6 +1796,11 @@ def test_time_literal(con, backend):
                     ["flink"],
                     raises=AssertionError,
                     reason="flink doesn't preserve subsecond information",
+                ),
+                pytest.mark.notimpl(
+                    ["db2"],
+                    raises=AssertionError,
+                    reason="db2 truncates subsecond precision",
                 ),
             ],
         ),
@@ -1851,6 +1881,7 @@ INTERVAL_BACKEND_TYPES = {
     raises=AssertionError,
 )
 @pytest.mark.notimpl(["athena"], raises=PyAthenaOperationalError)
+@pytest.mark.notimpl(["db2"], raises=IbmDb2Error)
 def test_interval_literal(con, backend):
     expr = ibis.interval(1, unit="s")
     result = con.execute(expr)
@@ -1867,7 +1898,8 @@ def test_interval_literal(con, backend):
     reason="Streaming database does not guarantee row order without ORDER BY",
     strict=False,
 )
-@pytest.mark.notimpl(["exasol", "druid", "db2"], raises=com.OperationNotDefinedError)
+@pytest.mark.notimpl(["exasol", "druid"], raises=com.OperationNotDefinedError)
+@pytest.mark.notimpl(["db2"], raises=IbmDb2Error)
 def test_date_column_from_ymd(backend, con, alltypes, df):
     c = alltypes.timestamp_col
     expr = ibis.date(c.year(), c.month(), c.day())
@@ -1947,6 +1979,7 @@ def test_timestamp_extract_milliseconds_with_big_value(con):
 )
 @pytest.mark.notimpl(["oracle"], raises=OracleDatabaseError, reason="ORA-00932")
 @pytest.mark.notimpl(["exasol"], raises=ExaQueryError)
+@pytest.mark.notimpl(["db2"], raises=IbmDb2Error)
 def test_integer_cast_to_timestamp_column(backend, alltypes, df):
     expr = alltypes.int_col.cast("timestamp")
     expected = pd.to_datetime(df.int_col, unit="s").rename(expr.get_name())
@@ -1956,6 +1989,7 @@ def test_integer_cast_to_timestamp_column(backend, alltypes, df):
 
 @pytest.mark.notimpl(["exasol"], raises=ExaQueryError)
 @pytest.mark.notimpl(["oracle"], raises=OracleDatabaseError)
+@pytest.mark.notimpl(["db2"], raises=IbmDb2Error)
 def test_integer_cast_to_timestamp_scalar(alltypes, df):
     expr = alltypes.int_col.min().cast("timestamp")
     result = expr.execute()
@@ -1993,6 +2027,7 @@ def test_integer_cast_to_timestamp_scalar(alltypes, df):
     raises=OracleDatabaseError,
     reason="ORA-00932: expression is of data type NUMBER, which is incompatible with expected data type TIMESTAMP",
 )
+@pytest.mark.notimpl(["db2"], raises=IbmDb2Error)
 @pytest.mark.parametrize(
     "dtype", ["timestamp", "timestamp(1)", "timestamp(3)", "timestamp(6)"]
 )
@@ -2057,6 +2092,7 @@ def build_date_col(t):
     strict=False,
 )
 @pytest.mark.notimpl(["druid"], raises=PyDruidProgrammingError)
+@pytest.mark.notimpl(["db2"], raises=IbmDb2Error)
 @pytest.mark.parametrize(
     ("left_fn", "right_fn"),
     [
@@ -2193,6 +2229,11 @@ def test_large_timestamp(con):
                     reason="precision for type timestamp or timestamptz must be between 0 and 6",
                 ),
                 pytest.mark.notyet(["athena"], raises=PyAthenaOperationalError),
+                pytest.mark.notimpl(
+                    ["db2"],
+                    raises=AssertionError,
+                    reason="db2 truncates nanoseconds",
+                ),
             ],
         ),
     ],
@@ -2235,9 +2276,11 @@ def test_timestamp_precision_output(con, ts, scale, unit):
                     ["exasol", "materialize", "polars", "sqlite", "oracle", "impala"],
                     raises=com.OperationNotDefinedError,
                 ),
+                pytest.mark.notimpl(["db2"], raises=IbmDb2Error),
             ],
         ),
-        param(ibis.date("1992-09-30"), ibis.date("1992-10-01"), "day", 1, id="date"),
+        param(ibis.date("1992-09-30"), ibis.date("1992-10-01"), "day", 1, id="date",
+              marks=[pytest.mark.notimpl(["db2"], raises=IbmDb2Error)]),
         param(
             ibis.timestamp("1992-09-30 23:59:59"),
             ibis.timestamp("1992-10-01 01:58:00"),
@@ -2258,6 +2301,11 @@ def test_timestamp_precision_output(con, ts, scale, unit):
                 pytest.mark.notimpl(
                     ["exasol", "polars", "sqlite", "oracle", "impala"],
                     raises=com.OperationNotDefinedError,
+                ),
+                pytest.mark.notimpl(
+                    ["db2"],
+                    raises=AssertionError,
+                    reason="db2 returns wrong delta value",
                 ),
             ],
         ),
@@ -2380,6 +2428,7 @@ def test_delta(con, start, end, unit, expected):
     strict=False,
 )
 @pytest.mark.notimpl(["exasol"], raises=com.OperationNotDefinedError)
+@pytest.mark.notimpl(["db2"], raises=IbmDb2Error)
 @pytest.mark.notimpl(
     ["risingwave"],
     raises=PsycoPg2InternalError,
@@ -2421,6 +2470,7 @@ def test_timestamp_bucket(backend, kws, pd_freq):
 )
 @pytest.mark.parametrize("offset_mins", [2, -2], ids=["pos", "neg"])
 @pytest.mark.notimpl(["exasol"], raises=com.OperationNotDefinedError)
+@pytest.mark.notimpl(["db2"], raises=IbmDb2Error)
 @pytest.mark.notimpl(
     ["risingwave"],
     raises=PsycoPg2InternalError,
@@ -2493,6 +2543,7 @@ def test_time_literal_sql(dialect, snapshot, micros):
 @pytest.mark.notimpl(
     ["druid"], raises=PyDruidProgrammingError, reason="no date support"
 )
+@pytest.mark.notimpl(["db2"], raises=IbmDb2Error)
 @pytest.mark.parametrize(
     "value",
     [
@@ -2567,6 +2618,7 @@ def test_date_scalar(con, value, func):
 @pytest.mark.notyet(
     ["datafusion", "druid", "exasol"], raises=com.OperationNotDefinedError
 )
+@pytest.mark.notyet(["db2"], raises=IbmDb2Error)
 def test_simple_unix_date_offset(con):
     s = "2023-04-07"
     d = ibis.date(s)
