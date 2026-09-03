@@ -50,11 +50,11 @@ def check_eq(left, right, how, **kwargs):
     [
         "inner",
         "left",
-        param("right", marks=[sqlite_right_or_full_mark]),
+        param("right", marks=[sqlite_right_or_full_mark, pytest.mark.notimpl(["db2"])]),
         # TODO: mysql and singlestoredb will likely never support full outer join
         # syntax, but we might be able to work around that using
         # LEFT JOIN UNION RIGHT JOIN
-        param("outer", marks=sqlite_right_or_full_mark),
+        param("outer", marks=[sqlite_right_or_full_mark, pytest.mark.notimpl(["db2"])]),
     ],
 )
 @pytest.mark.notimpl(["druid"])
@@ -106,6 +106,7 @@ def test_mutating_join(batting, awards_players, how):
 @pytest.mark.parametrize("how", ["semi", "anti"])
 @pytest.mark.notimpl(["druid"])
 @pytest.mark.notyet(["flink"], reason="Flink doesn't support semi joins or anti joins")
+@pytest.mark.notimpl(["db2"])
 def test_filtering_join(backend, batting, awards_players, how):
     left = batting.filter(batting.yearID == 2015)
     right = awards_players.filter(awards_players.lgID == "NL").drop("yearID", "lgID")
@@ -379,6 +380,7 @@ def test_join_conflicting_columns(backend, con):
         "bigquery",
         "clickhouse",
         "datafusion",
+        "db2",
         "druid",
         "exasol",
         "flink",
