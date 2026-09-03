@@ -35,7 +35,7 @@ def table(backend):
     return backend.functional_alltypes
 
 
-@pytest.mark.notimpl(["polars"])
+@pytest.mark.notimpl(["polars", "db2"])
 def test_interactive_execute_on_repr(table, queries):
     repr(table.bigint_col.sum())
     assert len(queries) >= 1
@@ -110,7 +110,7 @@ def test_no_recursion_error(con, monkeypatch):
 
 
 @pytest.mark.notimpl(
-    ["impala", "flink", "pyspark"],
+    ["impala", "flink", "pyspark", "db2"],
     reason="backend calls `execute` as part of pyarrow conversion",
 )
 def test_scalar_uses_pyarrow(con, table, monkeypatch, mocker):
