@@ -69,7 +69,9 @@ def test_get_schema_types(con, server_type, expected_type, temp_table):
 
     try:
         schema = con.get_schema(temp_table)
-        assert isinstance(schema["x"], type(expected_type))
+        # DB2 uppercases unquoted column names in SYSCAT.COLUMNS ("x" -> "X")
+        key = "x" if "x" in schema else "X"
+        assert isinstance(schema[key], type(expected_type))
     finally:
         con.drop_table(temp_table, force=True)
 
