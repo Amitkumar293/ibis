@@ -103,7 +103,6 @@ def _create_temp_table_with_schema(backend, con, temp_table_name, schema, data=N
     ["flink"],
     reason="Flink backend supports creating only TEMPORARY VIEW for in-memory data.",
 )
-@pytest.mark.notimpl(["db2"])
 def test_create_table(backend, con, temp_table, func, sch):
     df = pd.DataFrame({"first_name": ["A", "B", "C"], "salary": [100.0, 200.0, 300.0]})
 
@@ -187,7 +186,6 @@ def test_create_table(backend, con, temp_table, func, sch):
     ],
 )
 @pytest.mark.notimpl(["druid"])
-@pytest.mark.notimpl(["db2"])
 def test_create_table_overwrite_temp(backend, con, temp_table, temp, overwrite):
     df = pd.DataFrame(
         {
@@ -220,7 +218,6 @@ def test_create_table_overwrite_temp(backend, con, temp_table, temp, overwrite):
     raises=com.UnsupportedOperationError,
     reason="no reasonable implementation is supported by the database",
 )
-@pytest.mark.notimpl(["db2"])
 def test_load_data(backend, con, temp_table, lamduh):
     sch = ibis.schema(
         [
@@ -1109,7 +1106,12 @@ def test_self_join_memory_table(backend, con, monkeypatch):
 @pytest.mark.parametrize(
     "obj, table_name",
     [
-        param(lambda: pa.table({"a": ["a"], "b": [1]}), "df_arrow", id="pyarrow table"),
+        param(
+            lambda: pa.table({"a": ["a"], "b": [1]}),
+            "df_arrow",
+            marks=[pytest.mark.notimpl(["db2"], raises=(ValueError, TypeError))],
+            id="pyarrow table",
+        ),
         param(
             lambda: pa.table({"a": ["a"], "b": [1]}).to_reader(),
             "df_arrow_batch_reader",
@@ -1135,13 +1137,15 @@ def test_self_join_memory_table(backend, con, monkeypatch):
                         "athena",
                         "singlestoredb",
                     ]
-                )
+                ),
+                pytest.mark.notimpl(["db2"], raises=(ValueError, TypeError)),
             ],
             id="pyarrow_rbr",
         ),
         param(
             lambda: pa.table({"a": ["a"], "b": [1]}).to_batches()[0],
             "df_arrow_single_batch",
+            marks=[pytest.mark.notimpl(["db2"], raises=(ValueError, TypeError))],
             id="pyarrow_single_batch",
         ),
         param(
@@ -1172,6 +1176,7 @@ def test_self_join_memory_table(backend, con, monkeypatch):
                     reason="we don't materialize datasets to avoid perf footguns",
                 ),
                 pytest.mark.notimpl(["polars"], raises=NotImplementedError),
+                pytest.mark.notimpl(["db2"], raises=(ValueError, TypeError)),
             ],
             id="pyarrow dataset",
         ),
