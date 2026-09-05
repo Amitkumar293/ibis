@@ -813,7 +813,6 @@ def test_upsert_from_memtable(backend, con, temp_table, sch, expectation):
     reason="Materialize restricts INSERT operations within transaction blocks (write-only transactions only).",
     # Ref: https://materialize.com/docs/sql/begin/
 )
-@pytest.mark.notimpl(["db2"])
 def test_insert_from_memtable(con, temp_table):
     df = pd.DataFrame({"x": range(3)})
     table_name = temp_table
@@ -1223,7 +1222,6 @@ def test_self_join_memory_table(backend, con, monkeypatch):
     ["flink"],
     reason="Flink backend supports creating only TEMPORARY VIEW for in-memory data.",
 )
-@pytest.mark.notimpl(["db2"])
 def test_create_table_in_memory(con, obj, table_name, monkeypatch):
     monkeypatch.setattr(ibis.options, "default_backend", con)
     table_name = gen_name(table_name)

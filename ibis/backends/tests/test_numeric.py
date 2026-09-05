@@ -19,6 +19,7 @@ from ibis.backends.tests.errors import (
     DuckDBParserException,
     ExaQueryError,
     GoogleBadRequest,
+    IbmDb2Error,
     ImpalaHiveServer2Error,
     MySQLOperationalError,
     OracleDatabaseError,
@@ -302,6 +303,7 @@ def test_numeric_literal(con, backend, expr, expected_types):
                 "flink": decimal.Decimal("1.1"),
                 "polars": decimal.Decimal("1.1"),
                 "databricks": decimal.Decimal("1.1"),
+                "db2": decimal.Decimal("1.1"),
             },
             {
                 "bigquery": "NUMERIC",
@@ -368,7 +370,10 @@ def test_numeric_literal(con, backend, expr, expected_types):
                 "flink": "DECIMAL(38, 9) NOT NULL",
                 "databricks": "decimal(38,9)",
             },
-            marks=[pytest.mark.notimpl(["exasol"], raises=ExaQueryError)],
+            marks=[
+                pytest.mark.notimpl(["exasol"], raises=ExaQueryError),
+                pytest.mark.notimpl(["db2"], raises=IbmDb2Error),
+            ],
             id="decimal-small",
         ),
         param(
@@ -443,6 +448,7 @@ def test_numeric_literal(con, backend, expr, expected_types):
                     reason="precision for type numeric must be between 1 and 39",
                     raises=PsycoPgInternalError,
                 ),
+                pytest.mark.notimpl(["db2"], raises=IbmDb2Error),
             ],
             id="decimal-big",
         ),
@@ -521,6 +527,7 @@ def test_numeric_literal(con, backend, expr, expected_types):
                     reason='invalid input syntax for type numeric: "Infinity"',
                     raises=PsycoPgInternalError,
                 ),
+                pytest.mark.notimpl(["db2"], raises=SystemError),
             ],
             id="decimal-infinity+",
         ),
@@ -599,6 +606,7 @@ def test_numeric_literal(con, backend, expr, expected_types):
                     reason='invalid input syntax for type numeric: "-Infinity"',
                     raises=PsycoPgInternalError,
                 ),
+                pytest.mark.notimpl(["db2"], raises=SystemError),
             ],
             id="decimal-infinity-",
         ),
@@ -675,6 +683,7 @@ def test_numeric_literal(con, backend, expr, expected_types):
                 pytest.mark.notyet(["bigquery"], raises=GoogleBadRequest),
                 pytest.mark.notyet(["exasol"], raises=ExaQueryError),
                 pytest.mark.notyet(["polars"], reason="panic", raises=BaseException),
+                pytest.mark.notimpl(["db2"], raises=SystemError),
             ],
             id="decimal-NaN",
         ),
@@ -766,6 +775,7 @@ def test_decimal_literal(con, backend, expr, expected_types, expected_result):
 @pytest.mark.notimpl(
     ["singlestoredb"], raises=(SingleStoreDBOperationalError, NotImplementedError)
 )
+@pytest.mark.notimpl(["db2"], raises=IbmDb2Error)
 def test_isnan_isinf(
     backend,
     con,
