@@ -523,6 +523,9 @@ class Backend(SQLBackend):
             if isinstance(obj, pd.DataFrame):
                 self.insert(name, obj, database=database)
             elif isinstance(obj, ir.Table):
+                # Ensure any in-memory tables referenced by obj (e.g. memtables)
+                # are registered in the database before the INSERT is executed.
+                self._register_in_memory_tables(obj)
                 insert_sql = f"INSERT INTO {full_name} {self.compile(obj)}"
                 with self._safe_raw_sql(insert_sql):
                     pass
@@ -655,7 +658,9 @@ class Backend(SQLBackend):
             finally:
                 cursor.close()
         else:
-            # Insert from table expression
+            # Insert from table expression — ensure any in-memory tables
+            # referenced (e.g. memtables) are registered first.
+            self._register_in_memory_tables(obj)
             insert_sql = f"INSERT INTO {full_name} {self.compile(obj)}"
             with self._safe_raw_sql(insert_sql):
                 pass
