@@ -403,8 +403,9 @@ class Backend(SQLBackend):
                 type_str = type_name
 
             ibis_type = type_mapper.from_string(type_str, nullable=(nulls == "Y"))
-            # Return column names in lowercase for ibis convention
-            fields[col_name.lower()] = ibis_type
+            # Return column names verbatim — SYSCAT stores them in the case they
+            # were defined with (uppercase for unquoted DDL, exact case for quoted).
+            fields[col_name] = ibis_type
 
         return sch.Schema(fields)
 
