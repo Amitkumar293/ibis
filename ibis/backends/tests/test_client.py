@@ -1148,7 +1148,6 @@ def test_self_join_memory_table(backend, con, monkeypatch):
                         "singlestoredb",
                     ]
                 ),
-                pytest.mark.notimpl(["db2"], raises=(ValueError, TypeError)),
             ],
             id="pyarrow_rbr",
         ),
