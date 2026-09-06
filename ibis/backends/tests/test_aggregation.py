@@ -497,9 +497,7 @@ def test_aggregate_grouped(backend, alltypes, df, result_fn, expected_fn):
                     raises=com.OperationNotDefinedError,
                 ),
                 pytest.mark.notimpl(["druid"], strict=False, raises=AssertionError),
-                pytest.mark.notimpl(
-                    ["db2"], raises=com.OperationNotDefinedError
-                ),
+                pytest.mark.notimpl(["db2"], raises=com.OperationNotDefinedError),
                 pytest.mark.notyet(
                     ["impala", "pyspark", "flink", "materialize"],
                     raises=com.OperationNotDefinedError,
@@ -515,9 +513,7 @@ def test_aggregate_grouped(backend, alltypes, df, result_fn, expected_fn):
                     ["mssql", "exasol"],
                     raises=com.OperationNotDefinedError,
                 ),
-                pytest.mark.notimpl(
-                    ["db2"], raises=com.OperationNotDefinedError
-                ),
+                pytest.mark.notimpl(["db2"], raises=com.OperationNotDefinedError),
                 pytest.mark.notyet(
                     ["impala", "pyspark", "flink", "materialize"],
                     raises=com.OperationNotDefinedError,
@@ -533,9 +529,7 @@ def test_aggregate_grouped(backend, alltypes, df, result_fn, expected_fn):
                     ["mssql", "exasol"],
                     raises=com.OperationNotDefinedError,
                 ),
-                pytest.mark.notimpl(
-                    ["db2"], raises=com.OperationNotDefinedError
-                ),
+                pytest.mark.notimpl(["db2"], raises=com.OperationNotDefinedError),
                 pytest.mark.notyet(
                     ["impala", "pyspark", "flink", "athena", "materialize"],
                     raises=com.OperationNotDefinedError,
@@ -1012,7 +1006,16 @@ def test_quantile(
     ],
 )
 @pytest.mark.notyet(
-    ["druid", "flink", "impala", "mysql", "singlestoredb", "sqlite", "materialize", "db2"],
+    [
+        "druid",
+        "flink",
+        "impala",
+        "mysql",
+        "singlestoredb",
+        "sqlite",
+        "materialize",
+        "db2",
+    ],
     raises=(com.OperationNotDefinedError, com.UnsupportedBackendType),
     reason="quantiles (approximate or otherwise) not supported",
 )
@@ -1082,7 +1085,9 @@ def test_approx_quantile(con, filtered, multi):
             lambda t, where: t.G[where].corr(t.RBI[where]),
             id="corr_pop",
             marks=[
-                pytest.mark.notimpl(["druid", "db2"], raises=com.OperationNotDefinedError),
+                pytest.mark.notimpl(
+                    ["druid", "db2"], raises=com.OperationNotDefinedError
+                ),
                 pytest.mark.notyet(
                     ["impala", "mysql", "singlestoredb", "sqlite", "flink"],
                     raises=com.OperationNotDefinedError,
@@ -1165,7 +1170,9 @@ def test_approx_quantile(con, filtered, multi):
             lambda t, where: (t.G[where] > 34.0).corr(t.G[where] <= 34.0),
             id="corr_pop_bool",
             marks=[
-                pytest.mark.notimpl(["druid", "db2"], raises=com.OperationNotDefinedError),
+                pytest.mark.notimpl(
+                    ["druid", "db2"], raises=com.OperationNotDefinedError
+                ),
                 pytest.mark.notyet(
                     ["impala", "mysql", "singlestoredb", "sqlite", "flink"],
                     raises=com.OperationNotDefinedError,
@@ -1333,7 +1340,17 @@ def test_string_quantile(alltypes, func):
     ["bigquery", "sqlite", "druid"], raises=com.OperationNotDefinedError
 )
 @pytest.mark.notyet(
-    ["impala", "mysql", "singlestoredb", "mssql", "trino", "exasol", "flink", "athena", "db2"],
+    [
+        "impala",
+        "mysql",
+        "singlestoredb",
+        "mssql",
+        "trino",
+        "exasol",
+        "flink",
+        "athena",
+        "db2",
+    ],
     raises=com.OperationNotDefinedError,
 )
 @pytest.mark.notyet(

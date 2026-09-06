@@ -77,7 +77,9 @@ class Db2Generator(Generator):
         """Generate CAST expression for Db2."""
         return f"CAST({self.sql(expression, 'this')} AS {self.sql(expression, 'to')})"
 
-    def trycast_sql(self, expression: exp.TryCast, safe_prefix: str | None = None) -> str:
+    def trycast_sql(
+        self, expression: exp.TryCast, safe_prefix: str | None = None
+    ) -> str:
         """Db2 doesn't have TRY_CAST, use regular CAST."""
         return self.cast_sql(expression, safe_prefix)
 
@@ -214,19 +216,20 @@ class Db2Compiler(SQLGlotCompiler):
     SIMPLE_OPS = {
         k: v
         for k, v in SQLGlotCompiler.SIMPLE_OPS.items()
-        if k not in (
-            ops.StartsWith,          # → visit_StartsWith (LEFT + LENGTH)
-            ops.StringContains,      # → visit_StringContains (LOCATE)
-            ops.RandomUUID,          # → visit_RandomUUID (GENERATE_UNIQUE)
-            ops.ArgMin,              # → visit_ArgMin (raise)
-            ops.ArgMax,              # → visit_ArgMax (raise)
-            ops.ApproxCountDistinct, # → visit_ApproxCountDistinct (COUNT DISTINCT)
-            ops.StringSplit,         # → visit_StringSplit (raise)
-            ops.Median,              # → visit_Median (already implemented)
-            ops.RegexSearch,         # → visit_RegexSearch (REGEXP_LIKE)
-            ops.RegexExtract,        # → visit_RegexExtract (REGEXP_SUBSTR)
-            ops.RandomScalar,        # → visit_RandomScalar (RAND())
-            ops.Xor,                 # → visit_Xor (raise — DB2 has no XOR keyword)
+        if k
+        not in (
+            ops.StartsWith,  # → visit_StartsWith (LEFT + LENGTH)
+            ops.StringContains,  # → visit_StringContains (LOCATE)
+            ops.RandomUUID,  # → visit_RandomUUID (GENERATE_UNIQUE)
+            ops.ArgMin,  # → visit_ArgMin (raise)
+            ops.ArgMax,  # → visit_ArgMax (raise)
+            ops.ApproxCountDistinct,  # → visit_ApproxCountDistinct (COUNT DISTINCT)
+            ops.StringSplit,  # → visit_StringSplit (raise)
+            ops.Median,  # → visit_Median (already implemented)
+            ops.RegexSearch,  # → visit_RegexSearch (REGEXP_LIKE)
+            ops.RegexExtract,  # → visit_RegexExtract (REGEXP_SUBSTR)
+            ops.RandomScalar,  # → visit_RandomScalar (RAND())
+            ops.Xor,  # → visit_Xor (raise — DB2 has no XOR keyword)
         )
     }
 
@@ -482,6 +485,9 @@ class Db2Compiler(SQLGlotCompiler):
 
     def visit_InMemoryTable(self, op, *, name, schema, data):
         # DB2 stores all identifiers uppercase — memtable names must match
-        return super().visit_InMemoryTable(op, name=name.upper(), schema=schema, data=data)
-            
+        return super().visit_InMemoryTable(
+            op, name=name.upper(), schema=schema, data=data
+        )
+
+
 compiler = Db2Compiler()

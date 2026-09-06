@@ -877,7 +877,12 @@ def test_isnan_isinf(
             11 % 3,
             id="mod",
         ),
-        param(L(5.556).log10(), math.log10(5.556), id="log10", marks=[pytest.mark.notimpl(["db2"], raises=AssertionError, strict=False)]),
+        param(
+            L(5.556).log10(),
+            math.log10(5.556),
+            id="log10",
+            marks=[pytest.mark.notimpl(["db2"], raises=AssertionError, strict=False)],
+        ),
         param(
             L(5.556).radians(),
             math.radians(5.556),
