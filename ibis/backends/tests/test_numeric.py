@@ -889,7 +889,18 @@ def test_isnan_isinf(
             id="degrees",
         ),
         param(L(11) % 3, 11 % 3, id="mod"),
-        param(L(5.556).log10(), math.log10(5.556), id="log10"),
+        param(
+            L(5.556).log10(),
+            math.log10(5.556),
+            id="log10",
+            marks=[
+                pytest.mark.notimpl(
+                    ["db2"],
+                    raises=AssertionError,
+                    reason="DB2 LOG10 returns DECIMAL precision for decimal literal inputs",
+                )
+            ],
+        ),
         param(L(5.556).radians(), math.radians(5.556), id="radians"),
         param(L(5.556).degrees(), math.degrees(5.556), id="degrees"),
         param(L(11) % 3, 11 % 3, id="mod"),

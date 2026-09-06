@@ -468,7 +468,9 @@ class Backend(SQLBackend):
         try:
             import pyarrow as pa
 
-            if isinstance(obj, (pa.Table, pa.RecordBatch, pa.RecordBatchReader)):
+            if isinstance(obj, pa.RecordBatchReader):
+                obj = obj.read_all().to_pandas()
+            elif isinstance(obj, (pa.Table, pa.RecordBatch)):
                 obj = obj.to_pandas()
         except ImportError:
             pass

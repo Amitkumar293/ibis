@@ -867,7 +867,6 @@ def test_parse_url(con, result_func, expected):
     assert result == expected
 
 
-@pytest.mark.notimpl(["db2"], raises=IbmDb2Error)
 @pytest.mark.parametrize(
     ("inp, expected"),
     [
@@ -877,6 +876,7 @@ def test_parse_url(con, result_func, expected):
             "",
             id="empty",
             marks=[
+                pytest.mark.notimpl(["db2"], raises=SystemError),
                 pytest.mark.notyet(
                     ["oracle"],
                     reason="https://github.com/oracle/python-oracledb/issues/298",
@@ -885,14 +885,14 @@ def test_parse_url(con, result_func, expected):
                 pytest.mark.notyet(["exasol"], raises=AssertionError),
             ],
         ),
-        param("Abc", "Abc", id="no_change"),
-        param("abc", "Abc", id="lower_to_upper"),
-        param("aBC", "Abc", id="mixed_to_upper"),
-        param(" abc", " abc", id="leading_space"),
-        param("9abc", "9abc", id="leading_digit"),
-        param("aBc dEf", "Abc def", id="mixed_with_space"),
-        param("aBc-dEf", "Abc-def", id="mixed_with_hyphen"),
-        param("aBc1dEf", "Abc1def", id="mixed_with_digit"),
+        param("Abc", "Abc", id="no_change", marks=[pytest.mark.notimpl(["db2"], raises=SystemError)]),
+        param("abc", "Abc", id="lower_to_upper", marks=[pytest.mark.notimpl(["db2"], raises=SystemError)]),
+        param("aBC", "Abc", id="mixed_to_upper", marks=[pytest.mark.notimpl(["db2"], raises=SystemError)]),
+        param(" abc", " abc", id="leading_space", marks=[pytest.mark.notimpl(["db2"], raises=SystemError)]),
+        param("9abc", "9abc", id="leading_digit", marks=[pytest.mark.notimpl(["db2"], raises=SystemError)]),
+        param("aBc dEf", "Abc def", id="mixed_with_space", marks=[pytest.mark.notimpl(["db2"], raises=SystemError)]),
+        param("aBc-dEf", "Abc-def", id="mixed_with_hyphen", marks=[pytest.mark.notimpl(["db2"], raises=SystemError)]),
+        param("aBc1dEf", "Abc1def", id="mixed_with_digit", marks=[pytest.mark.notimpl(["db2"], raises=SystemError)]),
     ],
 )
 def test_capitalize(con, inp, expected):
@@ -1143,7 +1143,14 @@ def test_concat_with_null(con, fn):
         param(
             (ibis.literal("abc"), "def", None),
             id="abc-def-null",
-            marks=[pytest.mark.notimpl(["db2"], raises=IbmDb2Error)],
+            marks=[
+                pytest.mark.notimpl(
+                    ["db2"],
+                    raises=IbmDb2Error,
+                    reason="DB2 has no variadic CONCAT function; || operator propagates NULL so add method passes",
+                    strict=False,
+                )
+            ],
         ),
     ],
 )
