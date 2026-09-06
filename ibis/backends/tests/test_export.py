@@ -546,11 +546,6 @@ def test_roundtrip_delta(backend, con, alltypes, tmp_path, monkeypatch):
 @pytest.mark.notimpl(
     ["databricks"], raises=AssertionError, reason="Only the devil knows"
 )
-@pytest.mark.notimpl(
-    ["db2"],
-    raises=AssertionError,
-    reason="DB2 timestamp precision is microseconds, not nanoseconds",
-)
 @pytest.mark.notyet(["athena"], raises=PyAthenaOperationalError)
 def test_arrow_timestamp_with_time_zone(alltypes):
     from ibis.formats.pyarrow import PyArrowType

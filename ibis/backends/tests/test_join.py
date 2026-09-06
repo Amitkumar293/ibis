@@ -50,11 +50,11 @@ def check_eq(left, right, how, **kwargs):
     [
         "inner",
         "left",
-        param("right", marks=[sqlite_right_or_full_mark, pytest.mark.notimpl(["db2"])]),
+        param("right", marks=[sqlite_right_or_full_mark]),
         # TODO: mysql and singlestoredb will likely never support full outer join
         # syntax, but we might be able to work around that using
         # LEFT JOIN UNION RIGHT JOIN
-        param("outer", marks=[sqlite_right_or_full_mark, pytest.mark.notimpl(["db2"])]),
+        param("outer", marks=[sqlite_right_or_full_mark]),
     ],
 )
 @pytest.mark.notimpl(["druid"])

@@ -894,7 +894,6 @@ def test_parse_url(con, result_func, expected):
         param("aBc1dEf", "Abc1def", id="mixed_with_digit"),
     ],
 )
-@pytest.mark.notimpl(["db2"], raises=SystemError)
 def test_capitalize(con, inp, expected):
     s = ibis.literal(inp, type="string")
     expr = s.capitalize()
@@ -1143,7 +1142,6 @@ def test_concat_with_null(con, fn):
         param(
             (ibis.literal("abc"), "def", None),
             id="abc-def-null",
-            marks=[pytest.mark.notimpl(["db2"], raises=IbmDb2Error)],
         ),
     ],
 )

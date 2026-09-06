@@ -226,7 +226,6 @@ def test_aggregate_grouped(backend, alltypes, df, result_fn, expected_fn):
             lambda t, where: t.bool_col.nunique(where=where),
             lambda t, where: t.bool_col[where].dropna().nunique(),
             id="nunique",
-            marks=[pytest.mark.notimpl(["db2"], raises=IbmDb2Error)],
         ),
         param(
             lambda t, where: t.bool_col.any(where=where),
@@ -558,7 +557,6 @@ def test_aggregate_grouped(backend, alltypes, df, result_fn, expected_fn):
             lambda t: t.string_col.isin(["1", "7"]),
             lambda t: t.string_col.isin(["1", "7"]),
             id="is_in",
-            marks=[pytest.mark.notimpl(["db2"], raises=IbmDb2Error)],
         ),
     ],
 )
