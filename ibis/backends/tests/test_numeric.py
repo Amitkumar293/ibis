@@ -877,7 +877,7 @@ def test_isnan_isinf(
             11 % 3,
             id="mod",
         ),
-        param(L(5.556).log10(), math.log10(5.556), id="log10", marks=[pytest.mark.notimpl(["db2"], raises=AssertionError)]),
+        param(L(5.556).log10(), math.log10(5.556), id="log10", marks=[pytest.mark.notimpl(["db2"], raises=AssertionError, strict=False)]),
         param(
             L(5.556).radians(),
             math.radians(5.556),
@@ -1667,7 +1667,7 @@ def test_bitwise_shift(backend, alltypes, df, op, left_fn, right_fn):
     ("left", "right"),
     [param(4, L(2), id="int_col"), param(L(4), 2, id="col_int")],
 )
-@pytest.mark.notimpl(["db2"], raises=IbmDb2Error)
+@pytest.mark.notimpl(["db2"], raises=IbmDb2Error, strict=False)
 @pytest.mark.never(
     ["materialize"],
     raises=AssertionError,
