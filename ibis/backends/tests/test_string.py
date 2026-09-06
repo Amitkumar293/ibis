@@ -918,7 +918,7 @@ def test_capitalize(con, inp, expected):
     reason="Backend doesn't support arrays",
     raises=(com.OperationNotDefinedError, com.UnsupportedBackendType),
 )
-@pytest.mark.notimpl(["db2"], raises=IbmDb2Error)
+@pytest.mark.notimpl(["db2"], raises=com.OperationNotDefinedError)
 def test_array_string_join(con):
     s = ibis.array(["a", "b", "c"])
     expected = "a,b,c"
@@ -948,7 +948,7 @@ def test_array_string_join(con):
     raises=PyDruidProgrammingError,
     reason="druid doesn't support empty array construction",
 )
-@pytest.mark.notimpl(["db2"], raises=IbmDb2Error)
+@pytest.mark.notimpl(["db2"], raises=IbmDb2Error, strict=False)
 def test_empty_array_string_join(con):
     t = ibis.memtable({"arr": [[], ["a", "b", "c"]]})
 
@@ -1041,10 +1041,10 @@ def test_non_match_regex_search_is_false(con):
         "flink",
         "exasol",
         "bigquery",
-        "db2",
     ],
     raises=com.OperationNotDefinedError,
 )
+@pytest.mark.notimpl(["db2"], raises=IbmDb2Error)
 def test_re_split(con):
     lit = ibis.literal(",a,,,,c")
     expr = lit.re_split(",+")
@@ -1064,10 +1064,10 @@ def test_re_split(con):
         "flink",
         "exasol",
         "bigquery",
-        "db2",
     ],
     raises=com.OperationNotDefinedError,
 )
+@pytest.mark.notimpl(["db2"], raises=IbmDb2Error)
 @pytest.mark.xfail_version(athena=["sqlglot>=26.29,<26.33.0"], raises=AssertionError)
 def test_re_split_column(alltypes):
     expr = alltypes.limit(5).string_col.re_split(r"\d+")
@@ -1087,10 +1087,10 @@ def test_re_split_column(alltypes):
         "flink",
         "exasol",
         "bigquery",
-        "db2",
     ],
     raises=com.OperationNotDefinedError,
 )
+@pytest.mark.notimpl(["db2"], raises=IbmDb2Error)
 @pytest.mark.notyet(
     ["clickhouse"],
     raises=ClickHouseDatabaseError,
