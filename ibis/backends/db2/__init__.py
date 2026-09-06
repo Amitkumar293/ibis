@@ -145,8 +145,11 @@ class Backend(SQLBackend):
 
     @property
     def con(self):
-        """Alias for _connection — required by base SQL backend's
-        _make_memtable_finalizer which references self.con."""
+        """Alias for _connection.
+
+        Required by base SQL backend's _make_memtable_finalizer which
+        references self.con.
+        """
         return self._connection
 
     def _from_url(self, url: ParseResult, **kwarg_overrides):
@@ -234,7 +237,7 @@ class Backend(SQLBackend):
         """Execute raw SQL safely with cursor management."""
         if isinstance(query, sg.exp.Expression):
             query = query.sql(dialect=self.compiler.dialect)
-        
+
         cursor = self._connection.cursor()
         try:
             cursor.execute(query, **kwargs)
@@ -524,8 +527,10 @@ class Backend(SQLBackend):
         # supports all column types including VARCHAR(32768) used by
         # memtable/cache operations.
         tablespace_clause = " IN IBIS_32K" if not temp else ""
-        create_sql = f"CREATE {temp_clause}TABLE {full_name} ({columns_sql}){tablespace_clause}"
-        
+        create_sql = (
+            f"CREATE {temp_clause}TABLE {full_name} ({columns_sql}){tablespace_clause}"
+        )
+
         with self._safe_raw_sql(create_sql):
             pass
         # Commit the CREATE TABLE statement so it is visible to new connections.
@@ -748,7 +753,9 @@ class Backend(SQLBackend):
             # and get destroyed by _reconnect() called inside create_table.
             # We use a permanent table instead and rely on the finalizer to drop it.
             if name not in self.list_tables():
-                self.create_table(name, data, schema=schema, temp=False, overwrite=False)
+                self.create_table(
+                    name, data, schema=schema, temp=False, overwrite=False
+                )
 
 
 def connect(

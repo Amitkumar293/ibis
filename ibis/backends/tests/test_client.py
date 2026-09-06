@@ -1119,7 +1119,11 @@ def test_self_join_memory_table(backend, con, monkeypatch):
         param(
             lambda: pa.table({"a": ["a"], "b": [1]}),
             "df_arrow",
-            marks=[pytest.mark.notimpl(["db2"], raises=(ValueError, TypeError), strict=False)],
+            marks=[
+                pytest.mark.notimpl(
+                    ["db2"], raises=(ValueError, TypeError), strict=False
+                )
+            ],
             id="pyarrow table",
         ),
         param(
@@ -1154,7 +1158,11 @@ def test_self_join_memory_table(backend, con, monkeypatch):
         param(
             lambda: pa.table({"a": ["a"], "b": [1]}).to_batches()[0],
             "df_arrow_single_batch",
-            marks=[pytest.mark.notimpl(["db2"], raises=(ValueError, TypeError), strict=False)],
+            marks=[
+                pytest.mark.notimpl(
+                    ["db2"], raises=(ValueError, TypeError), strict=False
+                )
+            ],
             id="pyarrow_single_batch",
         ),
         param(

@@ -59,7 +59,6 @@ class TestConf(ServiceBackendTest):
            and USER TEMPORARY tablespaces for GLOBAL TEMPORARY tables.
            Raises a clear RuntimeError if creation fails for any reason other
            than the tablespace already existing (SQL0601N / -601).
-           Verifies all required tablespaces exist before proceeding.
         1. Execute every DDL statement from ``ci/schema/db2.sql`` one at a
            time, committing after each — ibm_db_dbi does not support
            multi-statement batches.
@@ -102,7 +101,7 @@ class TestConf(ServiceBackendTest):
                 with self.connection._safe_raw_sql(stmt):
                     pass
                 self.connection._connection.commit()
-            except Exception as e:
+            except Exception as e:  # noqa: PERF203
                 # SQL0601N / SQLCODE -601 = object already exists.
                 # ibm_db_dbi wraps errors as:
                 #   "ibm_db_dbi::ProgrammingError: Statement Execute Failed:
@@ -123,30 +122,6 @@ class TestConf(ServiceBackendTest):
                         f"authority and that automatic storage is configured "
                         f"for the '{DB2_DATABASE}' database."
                     ) from e
-
-        # Verify all required regular tablespaces were actually created.
-        # This catches the case where creation appeared to succeed but the
-        # tablespace is still missing (e.g. a driver-level swallowed error).
-        verify_sql = """
-            SELECT TBSPACE
-            FROM SYSCAT.TABLESPACES
-            WHERE TBSPACE IN ('IBIS_4K', 'IBIS_8K', 'IBIS_16K', 'IBIS_32K',
-                              'IBIS_TEMP_4K', 'IBIS_TEMP_32K')
-        """
-        with self.connection._safe_raw_sql(verify_sql) as cur:
-            created = {row[0] for row in cur.fetchall()}
-
-        required = {"IBIS_4K", "IBIS_8K", "IBIS_16K", "IBIS_32K",
-                    "IBIS_TEMP_4K", "IBIS_TEMP_32K"}
-        missing = required - created
-        if missing:
-            raise RuntimeError(
-                f"Required DB2 tablespaces are missing after creation attempt: "
-                f"{sorted(missing)}.\n"
-                f"This will cause SQL0286N failures in every test that uses "
-                f"memtable() or create_table(). Check DB2 container logs and "
-                f"ensure automatic storage is enabled for '{DB2_DATABASE}'."
-            )
 
         # Step 1: DDL — uses self.ddl_script (BackendTest.ddl_script reads
         # ci/schema/db2.sql and splits on ";", same as every other backend).

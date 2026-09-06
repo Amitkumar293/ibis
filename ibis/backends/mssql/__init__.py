@@ -223,9 +223,6 @@ class Backend(
         # -155 is the code for datetimeoffset
         self.con.add_output_converter(-155, datetimeoffset_to_datetime)
 
-        # Enable autocommit to avoid transaction issues in Python 3.14+
-        self.con.autocommit = True
-
         with closing(self.con.cursor()) as cur:
             cur.execute("SET DATEFIRST 1")
 
@@ -695,7 +692,7 @@ GO"""
         raw_table = sg.table(temp_name, catalog=catalog, db=db, quoted=False)
         target = sge.Schema(
             this=sg.table(
-                "##" * bool(temp) + temp_name, catalog=catalog, db=db, quoted=quoted
+                "#" * bool(temp) + temp_name, catalog=catalog, db=db, quoted=quoted
             ),
             expressions=schema.to_sqlglot_column_defs(self.dialect),
         )
