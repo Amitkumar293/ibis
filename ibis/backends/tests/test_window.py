@@ -317,7 +317,6 @@ with pytest.warns(FutureWarning, match="v9.0"):
         ),
     ],
 )
-@pytest.mark.notimpl(["db2"], raises=IbmDb2Error)
 def test_grouped_bounded_expanding_window(
     backend, alltypes, df, result_fn, expected_fn
 ):
