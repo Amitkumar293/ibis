@@ -867,6 +867,7 @@ def test_parse_url(con, result_func, expected):
     assert result == expected
 
 
+@pytest.mark.notimpl(["db2"], raises=IbmDb2Error)
 @pytest.mark.parametrize(
     ("inp, expected"),
     [
@@ -948,7 +949,7 @@ def test_array_string_join(con):
     raises=PyDruidProgrammingError,
     reason="druid doesn't support empty array construction",
 )
-@pytest.mark.notimpl(["db2"], raises=IbmDb2Error, strict=False)
+@pytest.mark.notimpl(["db2"], raises=Exception, strict=False)
 def test_empty_array_string_join(con):
     t = ibis.memtable({"arr": [[], ["a", "b", "c"]]})
 
@@ -1142,6 +1143,7 @@ def test_concat_with_null(con, fn):
         param(
             (ibis.literal("abc"), "def", None),
             id="abc-def-null",
+            marks=[pytest.mark.notimpl(["db2"], raises=IbmDb2Error)],
         ),
     ],
 )

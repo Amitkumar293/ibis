@@ -461,7 +461,7 @@ class Backend(SQLBackend):
         # Normalise schema: accept dict.items() (tuples) and plain dicts in
         # addition to ibis.Schema objects.
         if schema is not None and not isinstance(schema, sch.Schema):
-            schema = sch.Schema.from_tuples(schema)
+            schema = sch.schema(schema)
 
         # Normalise obj: convert pyarrow.Table to pandas DataFrame so the rest
         # of the method can treat obj as either pd.DataFrame or ir.Table.

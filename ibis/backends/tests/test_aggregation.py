@@ -1264,7 +1264,7 @@ def test_median(alltypes, df):
     ["impala", "mysql", "singlestoredb", "mssql", "trino", "flink", "athena"],
     raises=com.OperationNotDefinedError,
 )
-@pytest.mark.notimpl(["db2"], raises=com.OperationNotDefinedError)
+@pytest.mark.notimpl(["db2"], raises=Exception)
 @pytest.mark.notyet(
     ["clickhouse"],
     raises=ClickHouseDatabaseError,

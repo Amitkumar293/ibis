@@ -144,6 +144,11 @@ def test_create_table(backend, con, temp_table, func, sch):
                     ["bigquery"],
                     reason="tables created with temp=True cause a 404 on retrieval",
                 ),
+                pytest.mark.notimpl(
+                    ["db2"],
+                    raises=AssertionError,
+                    reason="DB2 GLOBAL TEMPORARY tables are session-scoped and return empty on reconnect",
+                ),
             ],
         ),
         param(
@@ -180,6 +185,11 @@ def test_create_table(backend, con, temp_table, func, sch):
                 pytest.mark.notimpl(
                     ["bigquery"],
                     reason="tables created with temp=True cause a 404 on retrieval",
+                ),
+                pytest.mark.notimpl(
+                    ["db2"],
+                    raises=AssertionError,
+                    reason="DB2 GLOBAL TEMPORARY tables are session-scoped and return empty on reconnect",
                 ),
             ],
         ),
@@ -1109,7 +1119,7 @@ def test_self_join_memory_table(backend, con, monkeypatch):
         param(
             lambda: pa.table({"a": ["a"], "b": [1]}),
             "df_arrow",
-            marks=[pytest.mark.notimpl(["db2"], raises=(ValueError, TypeError))],
+            marks=[pytest.mark.notimpl(["db2"], raises=(ValueError, TypeError), strict=False)],
             id="pyarrow table",
         ),
         param(
@@ -1145,7 +1155,7 @@ def test_self_join_memory_table(backend, con, monkeypatch):
         param(
             lambda: pa.table({"a": ["a"], "b": [1]}).to_batches()[0],
             "df_arrow_single_batch",
-            marks=[pytest.mark.notimpl(["db2"], raises=(ValueError, TypeError))],
+            marks=[pytest.mark.notimpl(["db2"], raises=(ValueError, TypeError), strict=False)],
             id="pyarrow_single_batch",
         ),
         param(

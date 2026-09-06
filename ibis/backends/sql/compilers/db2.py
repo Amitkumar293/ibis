@@ -126,11 +126,6 @@ class Db2Generator(Generator):
         """Generate REGEXP_LIKE for Db2."""
         return self.func("REGEXP_LIKE", expression.this, expression.expression)
 
-    def if_sql(self, expression: exp.If) -> str:
-        """Generate IF/CASE expression for Db2."""
-        # Db2 uses CASE WHEN for conditional logic
-        return f"CASE WHEN {self.sql(expression, 'this')} THEN {self.sql(expression, 'true')} ELSE {self.sql(expression, 'false')} END"
-
     def div_sql(self, expression: exp.Div) -> str:
         """Generate division for Db2."""
         # Db2 integer division needs special handling
