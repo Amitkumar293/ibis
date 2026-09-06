@@ -458,14 +458,27 @@ class Backend(SQLBackend):
         # uppercase name and self.table() / get_schema() can always find it.
         name = name.upper()
 
+        # Normalise schema: accept dict.items() (tuples) and plain dicts in
+        # addition to ibis.Schema objects.
+        if schema is not None and not isinstance(schema, sch.Schema):
+            schema = sch.Schema.from_tuples(schema)
+
+        # Normalise obj: convert pyarrow.Table to pandas DataFrame so the rest
+        # of the method can treat obj as either pd.DataFrame or ir.Table.
+        try:
+            import pyarrow as pa
+
+            if isinstance(obj, (pa.Table, pa.RecordBatch, pa.RecordBatchReader)):
+                obj = obj.to_pandas()
+        except ImportError:
+            pass
+
         if schema is None:
             if isinstance(obj, pd.DataFrame):
                 schema = sch.infer(obj)
             elif isinstance(obj, ir.Table):
                 schema = obj.schema()
             else:
-                # Handle pyarrow.Table, list of dicts, etc.
-                # Convert to DataFrame first then infer schema
                 obj = pd.DataFrame(obj)
                 schema = sch.infer(obj)
 
@@ -516,8 +529,10 @@ class Backend(SQLBackend):
         # Commit the CREATE TABLE statement so it is visible to new connections.
         self._connection.commit()
 
-        
-        self._reconnect()
+        # Only reconnect for permanent tables — GLOBAL TEMPORARY tables are
+        # session-scoped and get destroyed if the connection is recycled.
+        if not temp:
+            self._reconnect()
 
         # Insert data if provided
         if obj is not None:
@@ -531,8 +546,8 @@ class Backend(SQLBackend):
                 with self._safe_raw_sql(insert_sql):
                     pass
             else:
-                # pyarrow.Table, list of dicts already converted to DataFrame above
-                self.insert(name, obj, database=database)
+                # Fallback: list of dicts etc.
+                self.insert(name, pd.DataFrame(obj), database=database)
 
         return self.table(name, database=database)
 

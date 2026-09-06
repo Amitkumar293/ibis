@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 import ibis.common.exceptions as com
+from ibis.backends.tests.errors import IbmDb2Error
 
 
 @pytest.mark.notimpl(
@@ -25,10 +26,10 @@ import ibis.common.exceptions as com
         "flink",
         "databricks",
         "athena",
-        "db2",
     ],
     raises=com.OperationNotDefinedError,
 )
+@pytest.mark.notimpl(["db2"], raises=IbmDb2Error)
 @pytest.mark.notyet(
     ["materialize"],
     raises=com.OperationNotDefinedError,

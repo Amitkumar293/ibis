@@ -9,6 +9,7 @@ from pytest import param
 import ibis
 import ibis.common.exceptions as com
 import ibis.expr.schema as sch
+from ibis.backends.tests.errors import IbmDb2Error
 
 np = pytest.importorskip("numpy")
 pa = pytest.importorskip("pyarrow")
@@ -190,6 +191,11 @@ def test_semi_join_topk(con, batting, awards_players, func):
     ["mssql", "singlestoredb"],
     raises=com.IbisTypeError,
     reason="postgres can't handle null types columns",
+)
+@pytest.mark.notimpl(
+    ["db2"],
+    raises=IbmDb2Error,
+    reason='Db2 emits SQL0204N "NULL" is an undefined name for untyped null columns',
 )
 def test_join_with_pandas(batting, awards_players):
     batting_filt = batting.filter(lambda t: t.yearID < 1900)
