@@ -444,7 +444,9 @@ def test_case_where(backend, alltypes, df):
 
 
 # TODO: some of these are notimpl (datafusion) others are probably never
-@pytest.mark.notimpl(["mysql", "singlestoredb", "sqlite", "mssql", "druid", "exasol", "db2"])
+@pytest.mark.notimpl(
+    ["mysql", "singlestoredb", "sqlite", "mssql", "druid", "exasol", "db2"]
+)
 @pytest.mark.notyet(
     ["flink"], "NaN is not supported in Flink SQL", raises=NotImplementedError
 )
@@ -1894,7 +1896,15 @@ def test_hexdigest(backend, alltypes):
                 pytest.mark.notyet(["bigquery"], raises=GoogleBadRequest),
                 pytest.mark.notimpl(["snowflake"], raises=AssertionError),
                 pytest.mark.never(
-                    ["exasol", "impala", "mssql", "mysql", "singlestoredb", "sqlite", "db2"],
+                    [
+                        "exasol",
+                        "impala",
+                        "mssql",
+                        "mysql",
+                        "singlestoredb",
+                        "sqlite",
+                        "db2",
+                    ],
                     reason="backend doesn't support arrays",
                 ),
             ],
