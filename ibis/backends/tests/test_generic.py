@@ -359,13 +359,7 @@ def test_notin(backend, alltypes, sorted_df, column, elements):
             lambda t: t.bool_col ^ t.bool_col,
             lambda df: df.bool_col ^ df.bool_col,
             id="xor",
-            marks=[
-                pytest.mark.notimpl(
-                    ["db2"],
-                    raises=com.OperationNotDefinedError,
-                    reason="DB2 does not support XOR operator",
-                )
-            ],
+            marks=[pytest.mark.notimpl(["db2"], raises=com.OperationNotDefinedError, reason="DB2 does not support XOR operator")],
         ),
     ],
 )
@@ -444,9 +438,7 @@ def test_case_where(backend, alltypes, df):
 
 
 # TODO: some of these are notimpl (datafusion) others are probably never
-@pytest.mark.notimpl(
-    ["mysql", "singlestoredb", "sqlite", "mssql", "druid", "exasol", "db2"]
-)
+@pytest.mark.notimpl(["mysql", "singlestoredb", "sqlite", "mssql", "druid", "exasol", "db2"])
 @pytest.mark.notyet(
     ["flink"], "NaN is not supported in Flink SQL", raises=NotImplementedError
 )
@@ -1447,8 +1439,7 @@ def test_memtable_from_geopandas_dataframe(con, data_dir):
     con.to_pandas(t.limit(2).select("geometry"))
 
 
-@pytest.mark.notimpl(["oracle", "exasol"], raises=com.OperationNotDefinedError)
-@pytest.mark.notimpl(["db2"], raises=com.OperationNotDefinedError)
+@pytest.mark.notimpl(["oracle", "exasol", "db2"], raises=com.OperationNotDefinedError)
 @pytest.mark.notimpl(["druid"], raises=AssertionError)
 @pytest.mark.notyet(
     ["impala", "mssql", "mysql", "singlestoredb", "sqlite"],
@@ -1896,15 +1887,7 @@ def test_hexdigest(backend, alltypes):
                 pytest.mark.notyet(["bigquery"], raises=GoogleBadRequest),
                 pytest.mark.notimpl(["snowflake"], raises=AssertionError),
                 pytest.mark.never(
-                    [
-                        "exasol",
-                        "impala",
-                        "mssql",
-                        "mysql",
-                        "singlestoredb",
-                        "sqlite",
-                        "db2",
-                    ],
+                    ["exasol", "impala", "mssql", "mysql", "singlestoredb", "sqlite", "db2"],
                     reason="backend doesn't support arrays",
                 ),
             ],

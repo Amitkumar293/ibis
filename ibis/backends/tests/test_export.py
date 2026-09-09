@@ -439,10 +439,7 @@ def test_table_to_csv_writer_kwargs(delimiter, tmp_path, awards_players):
             dt.Decimal(38, 9),
             pa.Decimal128Type,
             id="decimal128",
-            marks=[
-                pytest.mark.notyet(["exasol"], raises=ExaQueryError),
-                pytest.mark.notimpl(["db2"], raises=IbmDb2Error),
-            ],
+            marks=[pytest.mark.notyet(["exasol"], raises=ExaQueryError), pytest.mark.notimpl(["db2"], raises=IbmDb2Error)],
         ),
         param(
             dt.Decimal(76, 38),

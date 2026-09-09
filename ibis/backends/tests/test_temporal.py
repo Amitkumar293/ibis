@@ -220,9 +220,8 @@ mark_notyet_risingwave_14670 = pytest.mark.notyet(
             id="millisecond",
             marks=[
                 pytest.mark.notimpl(
-                    ["druid", "oracle"], raises=com.OperationNotDefinedError
+                    ["druid", "oracle", "db2"], raises=com.OperationNotDefinedError
                 ),
-                pytest.mark.notimpl(["db2"], raises=com.OperationNotDefinedError),
             ],
         ),
         param(
@@ -2279,14 +2278,7 @@ def test_timestamp_precision_output(con, ts, scale, unit):
                 pytest.mark.notimpl(["db2"], raises=IbmDb2Error),
             ],
         ),
-        param(
-            ibis.date("1992-09-30"),
-            ibis.date("1992-10-01"),
-            "day",
-            1,
-            id="date",
-            marks=[pytest.mark.notimpl(["db2"], raises=IbmDb2Error)],
-        ),
+        param(ibis.date("1992-09-30"), ibis.date("1992-10-01"), "day", 1, id="date", marks=[pytest.mark.notimpl(["db2"], raises=IbmDb2Error)]),
         param(
             ibis.timestamp("1992-09-30 23:59:59"),
             ibis.timestamp("1992-10-01 01:58:00"),
