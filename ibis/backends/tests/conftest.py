@@ -33,7 +33,9 @@ def combine_marks(marks: list) -> callable:
 
 NO_ARRAY_SUPPORT_MARKS = [
     pytest.mark.never(
-        ["sqlite", "mysql", "exasol", "db2"], reason="No array support", raises=Exception
+        ["sqlite", "mysql", "exasol", "db2"],
+        reason="No array support",
+        raises=Exception,
     ),
     pytest.mark.never(
         ["mssql"],

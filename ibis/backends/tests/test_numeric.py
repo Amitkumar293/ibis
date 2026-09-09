@@ -370,7 +370,10 @@ def test_numeric_literal(con, backend, expr, expected_types):
                 "flink": "DECIMAL(38, 9) NOT NULL",
                 "databricks": "decimal(38,9)",
             },
-            marks=[pytest.mark.notimpl(["exasol"], raises=ExaQueryError), pytest.mark.notimpl(["db2"], raises=IbmDb2Error)],
+            marks=[
+                pytest.mark.notimpl(["exasol"], raises=ExaQueryError),
+                pytest.mark.notimpl(["db2"], raises=IbmDb2Error),
+            ],
             id="decimal-small",
         ),
         param(
@@ -853,7 +856,12 @@ def test_isnan_isinf(
                 pytest.mark.notimpl(["db2"], raises=AssertionError),
             ],
         ),
-        param(L(5.556).log10(), math.log10(5.556), id="log10", marks=[pytest.mark.notimpl(["db2"], raises=AssertionError)]),
+        param(
+            L(5.556).log10(),
+            math.log10(5.556),
+            id="log10",
+            marks=[pytest.mark.notimpl(["db2"], raises=AssertionError)],
+        ),
         param(
             L(5.556).radians(),
             math.radians(5.556),
@@ -869,7 +877,12 @@ def test_isnan_isinf(
             11 % 3,
             id="mod",
         ),
-        param(L(5.556).log10(), math.log10(5.556), id="log10", marks=[pytest.mark.notimpl(["db2"], raises=AssertionError, strict=False)]),
+        param(
+            L(5.556).log10(),
+            math.log10(5.556),
+            id="log10",
+            marks=[pytest.mark.notimpl(["db2"], raises=AssertionError, strict=False)],
+        ),
         param(
             L(5.556).radians(),
             math.radians(5.556),
@@ -881,7 +894,18 @@ def test_isnan_isinf(
             id="degrees",
         ),
         param(L(11) % 3, 11 % 3, id="mod"),
-        param(L(5.556).log10(), math.log10(5.556), id="log10", marks=[pytest.mark.notimpl(["db2"], raises=AssertionError, reason="DB2 LOG10 returns DECIMAL precision for decimal literal inputs")]),
+        param(
+            L(5.556).log10(),
+            math.log10(5.556),
+            id="log10",
+            marks=[
+                pytest.mark.notimpl(
+                    ["db2"],
+                    raises=AssertionError,
+                    reason="DB2 LOG10 returns DECIMAL precision for decimal literal inputs",
+                )
+            ],
+        ),
         param(L(5.556).radians(), math.radians(5.556), id="radians"),
         param(L(5.556).degrees(), math.degrees(5.556), id="degrees"),
         param(L(11) % 3, 11 % 3, id="mod"),

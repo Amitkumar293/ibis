@@ -45,8 +45,19 @@ def ftname(con, ftname_raw):
 @pytest.mark.parametrize(
     "schema",
     [
-        param(None, id="implicit_schema", marks=[pytest.mark.notimpl(["druid"]), pytest.mark.notimpl(["db2"], raises=IbmDb2Error)]),
-        param({"s": "string", "new_col": "double"}, id="explicit_schema", marks=[pytest.mark.notimpl(["db2"], raises=IbmDb2Error)]),
+        param(
+            None,
+            id="implicit_schema",
+            marks=[
+                pytest.mark.notimpl(["druid"]),
+                pytest.mark.notimpl(["db2"], raises=IbmDb2Error),
+            ],
+        ),
+        param(
+            {"s": "string", "new_col": "double"},
+            id="explicit_schema",
+            marks=[pytest.mark.notimpl(["db2"], raises=IbmDb2Error)],
+        ),
     ],
 )
 def test_con_dot_sql(backend, con, schema, ftname):
